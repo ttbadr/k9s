@@ -304,6 +304,19 @@ func shellIn(a *App, fqn, co string) {
 	}
 }
 
+func shellInWithCmd(a *App, fqn, co string, cmd string) {
+	os, err := getPodOS(a.factory, fqn)
+	if err != nil {
+		log.Warn().Err(err).Msgf("os detect failed")
+	}
+	args := computeShell(fqn, co, a.Conn().Config().Flags().KubeConfig, os, cmd)
+
+	c := color.New(color.BgGreen).Add(color.FgBlack).Add(color.Bold)
+	if !runK(a, shellOpts{clear: true, banner: c.Sprintf(bannerFmt, fqn, co), args: args}) {
+		a.Flash().Err(errors.New("Shell exec failed"))
+	}
+}
+
 func containerAttachIn(a *App, comp model.Component, path, co string) error {
 	if co != "" {
 		resumeAttachIn(a, comp, path, co)
@@ -347,11 +360,15 @@ func attachIn(a *App, path, co string) {
 }
 
 func computeShellArgs(path, co string, kcfg *string, os string) []string {
+	return computeShell(path, co, kcfg, os, shellCheck)
+}
+
+func computeShell(path, co string, kcfg *string, os string, cmd string) []string {
 	args := buildShellArgs("exec", path, co, kcfg)
 	if os == windowsOS {
 		return append(args, "--", powerShell)
 	}
-	return append(args, "--", "sh", "-c", shellCheck)
+	return append(args, "--", "sh", "-c", cmd)
 }
 
 func buildShellArgs(cmd, path, co string, kcfg *string) []string {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/derailed/k9s/internal"
 	"github.com/derailed/k9s/internal/client"
@@ -61,6 +62,8 @@ func (c *Container) bindDangerousKeys(aa ui.KeyActions) {
 	aa.Add(ui.KeyActions{
 		ui.KeyS: ui.NewKeyAction("Shell", c.shellCmd, true),
 		ui.KeyA: ui.NewKeyAction("Attach", c.attachCmd, true),
+		ui.KeyT: ui.NewKeyAction("Tail", c.tailCmd, true),
+		ui.KeyV: ui.NewKeyAction("Vim", c.vimCmd, true),
 	})
 }
 
@@ -142,6 +145,32 @@ func (c *Container) portForwardContext(ctx context.Context) context.Context {
 }
 
 func (c *Container) shellCmd(evt *tcell.EventKey) *tcell.EventKey {
+	return c.shellWithCmd(evt, shellCheck)
+}
+
+func (c *Container) tailCmd(evt *tcell.EventKey) *tcell.EventKey {
+	file := c.getCmd()
+	var cmd string
+	if len(file) == 0 {
+		cmd = shellCheck
+	} else {
+		cmd = "tail -n 100 -f " + file
+	}
+	return c.shellWithCmd(evt, cmd)
+}
+
+func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
+	file := c.getCmd()
+	var cmd string
+	if len(file) == 0 {
+		cmd = shellCheck
+	} else {
+		cmd = "vi " + file
+	}
+	return c.shellWithCmd(evt, cmd)
+}
+
+func (c *Container) shellWithCmd(evt *tcell.EventKey, cmd string) *tcell.EventKey {
 	path := c.GetTable().GetSelectedItem()
 	if path == "" {
 		return evt
@@ -149,7 +178,7 @@ func (c *Container) shellCmd(evt *tcell.EventKey) *tcell.EventKey {
 
 	c.Stop()
 	defer c.Start()
-	shellIn(c.App(), c.GetTable().Path, path)
+	shellInWithCmd(c.App(), c.GetTable().Path, path, cmd)
 
 	return nil
 }
@@ -233,4 +262,23 @@ func (c *Container) listForwardable(path string) (port.ContainerPortSpecs, map[s
 	}
 
 	return port.FromContainerPorts(path, co.Ports), po.Annotations, true
+}
+
+func (c *Container) getCmd() string {
+	po, err := fetchPod(c.App().factory, c.GetTable().Path)
+	if err != nil {
+		return ""
+	}
+
+	co, err := locateContainer(c.GetTable().GetSelectedItem(), po.Spec.Containers)
+	if err != nil {
+		c.App().Flash().Err(err)
+		return ""
+	}
+
+	strs := strings.Split(co.Args[2], "tail -n+1 -F")
+	if len(strs) > 1 {
+		return strs[len(strs)-1]
+	}
+	return ""
 }

@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	shellCheck = `command -v bash >/dev/null && exec bash || exec sh`
+	shellCheck = `command -v bash >/dev/null && exec sh || exec bash`
 	bannerFmt  = "<<K9s-Shell>> Pod: %s | Container: %s \n"
 )
 
