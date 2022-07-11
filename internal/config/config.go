@@ -171,7 +171,10 @@ func (c *Config) FavNamespaces() []string {
 
 // SetActiveNamespace set the active namespace in the current cluster.
 func (c *Config) SetActiveNamespace(ns string) error {
-	if cl := c.K9s.ActiveCluster(); cl != nil && len(ns) > 0 {
+	if len(ns) == 0 {
+		return nil
+	}
+	if cl := c.K9s.ActiveCluster(); cl != nil {
 		if cl.Namespace.Active == ns {
 			return nil
 		}
@@ -180,7 +183,7 @@ func (c *Config) SetActiveNamespace(ns string) error {
 		c.Save()
 		return conf
 	}
-	err := errors.New("no active cluster or empty namespace, unable to set active namespace")
+	err := errors.New("no active cluster, unable to set active namespace")
 	log.Error().Err(err).Msg("SetActiveNamespace")
 
 	return err
