@@ -80,7 +80,7 @@ func (l *LogsExtender) buildLogOpts(path, co string, prevLogs bool) *dao.LogOpti
 		Container:     co,
 		Lines:         int64(cfg.TailCount),
 		Previous:      prevLogs,
-		ShowTimestamp: cfg.ShowTime,
+		ShowTimestamp: false,
 	}
 	if opts.Container == "" {
 		opts.AllContainers = true

@@ -62,7 +62,6 @@ func (c *Container) bindDangerousKeys(aa ui.KeyActions) {
 	aa.Add(ui.KeyActions{
 		ui.KeyS: ui.NewKeyAction("Shell", c.shellCmd, true),
 		ui.KeyA: ui.NewKeyAction("Attach", c.attachCmd, true),
-		ui.KeyT: ui.NewKeyAction("Tail", c.tailCmd, true),
 		ui.KeyV: ui.NewKeyAction("Vim", c.vimCmd, true),
 	})
 }
@@ -115,7 +114,11 @@ func (c *Container) logOptions(prev bool) (*dao.LogOptions, error) {
 }
 
 func (c *Container) viewLogs(app *App, model ui.Tabular, gvr, path string) {
-	c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
+	if len(c.getSideCarLogPath()) > 0 {
+		c.tailCmd(nil)
+	} else {
+		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
+	}
 }
 
 // Handlers...
@@ -149,7 +152,7 @@ func (c *Container) shellCmd(evt *tcell.EventKey) *tcell.EventKey {
 }
 
 func (c *Container) tailCmd(evt *tcell.EventKey) *tcell.EventKey {
-	file := c.getCmd()
+	file := c.getSideCarLogPath()
 	var cmd string
 	if len(file) == 0 {
 		cmd = shellCheck
@@ -160,7 +163,7 @@ func (c *Container) tailCmd(evt *tcell.EventKey) *tcell.EventKey {
 }
 
 func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
-	file := c.getCmd()
+	file := c.getSideCarLogPath()
 	var cmd string
 	if len(file) == 0 {
 		cmd = shellCheck
@@ -264,7 +267,7 @@ func (c *Container) listForwardable(path string) (port.ContainerPortSpecs, map[s
 	return port.FromContainerPorts(path, co.Ports), po.Annotations, true
 }
 
-func (c *Container) getCmd() string {
+func (c *Container) getSideCarLogPath() string {
 	po, err := fetchPod(c.App().factory, c.GetTable().Path)
 	if err != nil {
 		return ""
@@ -276,9 +279,11 @@ func (c *Container) getCmd() string {
 		return ""
 	}
 
-	strs := strings.Split(co.Args[2], "tail -n+1 -F")
-	if len(strs) > 1 {
-		return strs[len(strs)-1]
+	if strings.Contains(co.Name, "sidecar") {
+		strs := strings.Split(co.Args[2], "tail -n+1 -F")
+		if len(strs) > 1 {
+			return strs[len(strs)-1]
+		}
 	}
 	return ""
 }
