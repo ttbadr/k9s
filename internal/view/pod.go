@@ -48,7 +48,7 @@ func NewPod(gvr client.GVR) ResourceViewer {
 	return &p
 }
 
-func (p *Pod) portForwardIndicator(data render.TableData) render.TableData {
+func (p *Pod) portForwardIndicator(data *render.TableData) {
 	ff := p.App().factory.Forwarders()
 
 	col := data.IndexOfHeader("PF")
@@ -57,8 +57,7 @@ func (p *Pod) portForwardIndicator(data render.TableData) render.TableData {
 			re.Row.Fields[col] = "[orange::b]Ⓕ"
 		}
 	}
-
-	return decorateCpuMemHeaderRows(p.App(), data)
+	decorateCpuMemHeaderRows(p.App(), data)
 }
 
 func (p *Pod) bindDangerousKeys(aa ui.KeyActions) {
@@ -153,13 +152,6 @@ func (p *Pod) showNode(evt *tcell.EventKey) *tcell.EventKey {
 	}
 
 	return nil
-}
-
-func nodeContext(path string) ContextFunc {
-	return func(ctx context.Context) context.Context {
-		ctx = context.WithValue(ctx, internal.KeyPath, path)
-		return ctx
-	}
 }
 
 func (p *Pod) showPFCmd(evt *tcell.EventKey) *tcell.EventKey {
