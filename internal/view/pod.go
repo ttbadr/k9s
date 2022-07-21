@@ -75,6 +75,7 @@ func (p *Pod) bindKeys(aa ui.KeyActions) {
 
 	aa.Add(ui.KeyActions{
 		ui.KeyN:      ui.NewKeyAction("Show Node", p.showNode, true),
+		ui.KeyC:      ui.NewKeyAction("Show Controller", p.showController, true),
 		ui.KeyF:      ui.NewKeyAction("Show PortForward", p.showPFCmd, true),
 		ui.KeyShiftR: ui.NewKeyAction("Sort Ready", p.GetTable().SortColCmd(readyCol, true), false),
 		ui.KeyShiftT: ui.NewKeyAction("Sort Restart", p.GetTable().SortColCmd("RESTARTS", false), false),
@@ -151,6 +152,49 @@ func (p *Pod) showNode(evt *tcell.EventKey) *tcell.EventKey {
 		p.App().Flash().Err(err)
 	}
 
+	return nil
+}
+
+func (p *Pod) showController(evt *tcell.EventKey) *tcell.EventKey {
+	path := p.GetTable().GetSelectedItem()
+	if path == "" {
+		return evt
+	}
+	pod, err := fetchPod(p.App().factory, path)
+	if err != nil {
+		p.App().Flash().Err(err)
+		return nil
+	}
+	references := pod.GetObjectMeta().GetOwnerReferences()
+	if len(references) == 0 {
+		return nil
+	}
+
+	var co ResourceViewer
+	var parent string
+	if references[0].Kind == "ReplicaSet" {
+		co = NewDeploy(client.NewGVR("apps/v1/deployments"))
+		parent = pod.GetObjectMeta().GetLabels()["app"]
+	} else if references[0].Kind == "StatefulSet" {
+		co = NewStatefulSet(client.NewGVR("apps/v1/statefulsets"))
+		parent = references[0].Name
+	} else if references[0].Kind == "DaemonSet" {
+		co = NewDaemonSet(client.NewGVR("apps/v1/daemonsets"))
+		parent = references[0].Name
+	} else if references[0].Kind == "Job" {
+		co = NewJob(client.NewGVR("batch/v1/jobs"))
+		parent = references[0].Name
+	} else if references[0].Kind == "CronJob" {
+		co = NewCronJob(client.NewGVR("batch/v1beta1/cronjobs"))
+		parent = references[0].Name
+	}
+
+	if co != nil {
+		co.SetInstance(p.App().Config.ActiveNamespace() + "/" + parent)
+		if err := p.App().inject(co); err != nil {
+			p.App().Flash().Err(err)
+		}
+	}
 	return nil
 }
 

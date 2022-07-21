@@ -60,6 +60,7 @@ func (c *Container) bindDangerousKeys(aa ui.KeyActions) {
 		ui.KeyS: ui.NewKeyAction("Shell", c.shellCmd, true),
 		ui.KeyA: ui.NewKeyAction("Attach", c.attachCmd, true),
 		ui.KeyV: ui.NewKeyAction("Vim", c.vimCmd, true),
+		ui.KeyD: ui.NewKeyAction("Arthas", c.arthasCmd, true),
 	})
 }
 
@@ -168,6 +169,11 @@ func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
 		cmd = "vi " + file
 	}
 	return c.shellWithCmd(evt, cmd)
+}
+
+func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
+	arthasCmd := "source <( url=http://10.116.53.198/scripts/arthas.sh;curl -sS $url || wget -qO - $url ) && exec sh"
+	return c.shellWithCmd(evt, arthasCmd)
 }
 
 func (c *Container) shellWithCmd(evt *tcell.EventKey, cmd string) *tcell.EventKey {
