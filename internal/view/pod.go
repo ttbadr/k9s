@@ -63,7 +63,7 @@ func (p *Pod) bindDangerousKeys(aa ui.KeyActions) {
 	aa.Add(ui.KeyActions{
 		tcell.KeyCtrlK: ui.NewKeyAction("Kill", p.killCmd, true),
 		ui.KeyS:        ui.NewKeyAction("Shell", p.shellCmd, true),
-		ui.KeyA:        ui.NewKeyAction("Attach", p.attachCmd, true),
+		ui.KeyT:        ui.NewKeyAction("Attach", p.attachCmd, true),
 	})
 }
 
