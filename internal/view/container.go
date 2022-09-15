@@ -171,7 +171,25 @@ func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
 }
 
 func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
-	arthasCmd := "source <( url=http://10.116.53.198/scripts/arthas.sh;curl -sS $url || wget -qO - $url ) && exec sh"
+	arthasCmd := `fileName=/tmp/arthas.sh
+url1='http://10.116.53.198/scripts/arthas.sh'
+url2='https://docs.google.com/uc?export=download&confirm=9iBg&id=1qzCkGHeofzFRUTWtQiDsTVs73sjjwq-5'
+if command -v curl &>/dev/null; then
+    curl -I -m 3 -o /dev/null -s http://10.116.53.198
+    if [ $? -gt 0 ];then
+        curl -L $url2 -o $fileName
+    else
+        curl -L $url1 -o $fileName
+    fi
+else
+    wget -T 3 --spider -S "http://10.116.53.198" &>/dev/null
+    if [ $? -gt 0 ];then
+        wget $url2 -O $fileName
+    else
+        wget $url1 -O $fileName
+    fi
+fi
+source $fileName`
 	return c.shellWithCmd(evt, arthasCmd)
 }
 
