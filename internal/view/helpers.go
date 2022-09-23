@@ -7,15 +7,33 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/derailed/k9s/internal"
 	"github.com/derailed/k9s/internal/client"
 	"github.com/derailed/k9s/internal/config"
 	"github.com/derailed/k9s/internal/model"
 	"github.com/derailed/k9s/internal/render"
 	"github.com/derailed/k9s/internal/ui"
+	"github.com/derailed/tview"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rs/zerolog/log"
 )
+
+func clipboardWrite(text string) error {
+	return clipboard.WriteAll(text)
+}
+
+func cpCmd(flash *model.Flash, v *tview.TextView) func(*tcell.EventKey) *tcell.EventKey {
+	return func(evt *tcell.EventKey) *tcell.EventKey {
+		if err := clipboardWrite(v.GetText(true)); err != nil {
+			flash.Err(err)
+			return evt
+		}
+		flash.Info("Content copied to clipboard...")
+
+		return nil
+	}
+}
 
 func parsePFAnn(s string) (string, string, bool) {
 	tokens := strings.Split(s, ":")
