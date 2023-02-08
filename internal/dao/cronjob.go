@@ -98,7 +98,7 @@ func (c *CronJob) ScanSA(ctx context.Context, fqn string, wait bool) (Refs, erro
 		if err != nil {
 			return nil, errors.New("expecting CronJob resource")
 		}
-		if cj.Spec.JobTemplate.Spec.Template.Spec.ServiceAccountName == n {
+		if serviceAccountMatches(cj.Spec.JobTemplate.Spec.Template.Spec.ServiceAccountName, n) {
 			refs = append(refs, Ref{
 				GVR: c.GVR(),
 				FQN: client.FQN(cj.Namespace, cj.Name),
@@ -112,7 +112,7 @@ func (c *CronJob) ScanSA(ctx context.Context, fqn string, wait bool) (Refs, erro
 // ToggleSuspend toggles suspend/resume on a CronJob.
 func (c *CronJob) ToggleSuspend(ctx context.Context, path string) error {
 	ns, n := client.Namespaced(path)
-	auth, err := c.Client().CanI(c.GVR(), ns, []string{client.GetVerb, client.UpdateVerb})
+	auth, err := c.Client().CanI(ns, c.GVR(), []string{client.GetVerb, client.UpdateVerb})
 	if err != nil {
 		return err
 	}
