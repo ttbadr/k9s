@@ -8,6 +8,7 @@ import (
 
 	"github.com/derailed/k9s/internal/dao"
 	"github.com/derailed/k9s/internal/ui"
+	"github.com/derailed/k9s/internal/ui/dialog"
 	"github.com/derailed/tcell/v2"
 	"github.com/derailed/tview"
 	"github.com/rs/zerolog/log"
@@ -31,8 +32,43 @@ func (s *ScaleExtender) bindKeys(aa ui.KeyActions) {
 		return
 	}
 	aa.Add(ui.KeyActions{
+		ui.KeyF: ui.NewKeyAction("Scale-Restart", s.fullRestartCmd, true),
 		ui.KeyS: ui.NewKeyAction("Scale", s.scaleCmd, true),
 	})
+}
+
+func (s *ScaleExtender) fullRestartCmd(evt *tcell.EventKey) *tcell.EventKey {
+	paths := s.GetTable().GetSelectedItems()
+	if len(paths) == 0 || len(paths) > 1 || paths[0] == "" {
+		return nil
+	}
+
+	s.Stop()
+	defer s.Start()
+	msg := fmt.Sprintf("Scale Restart %s %s?", singularize(s.GVR().R()), paths[0])
+	dialog.ShowConfirm(s.App().Styles.Dialog(), s.App().Content.Pages, "Confirm Scale Restart", msg, func() {
+		ctx, cancel := context.WithTimeout(context.Background(), s.App().Conn().Config().CallTimeout())
+		defer cancel()
+		for _, path := range paths {
+			factor, _ := s.getReplicas(paths)
+			if factor == "0" {
+				continue
+			}
+			if err := s.scale(ctx, path, 0); err != nil {
+				s.App().Flash().Err(err)
+			} else {
+				s.App().Flash().Infof("Scale to 0 for `%s...", path)
+			}
+			count, _ := strconv.Atoi(factor)
+			if err := s.scale(ctx, path, count); err != nil {
+				s.App().Flash().Err(err)
+			} else {
+				s.App().Flash().Infof("Scale to %d for `%s...", count, path)
+			}
+		}
+	}, func() {})
+
+	return nil
 }
 
 func (s *ScaleExtender) scaleCmd(evt *tcell.EventKey) *tcell.EventKey {
@@ -75,20 +111,27 @@ func (s *ScaleExtender) valueOf(col string) (string, error) {
 	return s.GetTable().GetSelectedCell(colIdx), nil
 }
 
-func (s *ScaleExtender) makeScaleForm(sels []string) (*tview.Form, error) {
-	f := s.makeStyledForm()
-
-	factor := "0"
+func (s *ScaleExtender) getReplicas(sels []string) (string, error) {
 	if len(sels) == 1 {
 		replicas, err := s.valueOf("READY")
 		if err != nil {
-			return nil, err
+			return "0", err
 		}
 		tokens := strings.Split(replicas, "/")
 		if len(tokens) < 2 {
-			return nil, fmt.Errorf("unable to locate replicas from %s", replicas)
+			return "0", fmt.Errorf("unable to locate replicas from %s", replicas)
 		}
-		factor = strings.TrimRight(tokens[1], ui.DeltaSign)
+		return strings.TrimRight(tokens[1], ui.DeltaSign), nil
+	}
+	return "0", nil
+}
+
+func (s *ScaleExtender) makeScaleForm(sels []string) (*tview.Form, error) {
+	f := s.makeStyledForm()
+
+	factor, err := s.getReplicas(sels)
+	if err != nil {
+		return nil, err
 	}
 	f.AddInputField("Replicas:", factor, 4, func(textToCheck string, lastChar rune) bool {
 		_, err := strconv.Atoi(textToCheck)
