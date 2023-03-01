@@ -173,7 +173,7 @@ func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
 func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
 	arthasCmd := `fileName=/tmp/arthas.sh
 url1='http://10.116.53.198/scripts/arthas.sh'
-url2='https://github.com/ttbadr/k9s/releases/download/v0.25.21/arthas.sh'
+url2='https://github.com/ttbadr/arthas/releases/download/3.6.7/arthas.sh'
 if command -v curl &>/dev/null; then
     curl -I -m 3 -o /dev/null -s http://10.116.53.198
     if [ $? -gt 0 ];then

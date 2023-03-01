@@ -1,0 +1,32 @@
+name: release
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3.5.0
+        with:
+          go-version: 1.20.1
+
+      - name: Setup GO env
+        run: go env -w CGO_ENABLED=0
+
+      - name: Checkout Code
+        uses: actions/checkout@v3.3.0
+
+      - name: Build
+        run: make build
+
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          tag: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: execs/k9s
