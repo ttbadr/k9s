@@ -28,7 +28,7 @@ func NewLogsExtender(v ResourceViewer, f LogOptionsFunc) ResourceViewer {
 // BindKeys injects new menu actions.
 func (l *LogsExtender) bindKeys(aa ui.KeyActions) {
 	aa.Add(ui.KeyActions{
-		ui.KeyL: ui.NewKeyAction("Logs", l.logsCmd(false), true),
+		ui.KeyL: ui.NewKeyAction("Logs", l.logsCmd(false), false),
 		ui.KeyP: ui.NewKeyAction("Logs Previous", l.logsCmd(true), true),
 	})
 }

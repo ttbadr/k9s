@@ -58,7 +58,7 @@ func (c *Container) bindDangerousKeys(aa ui.KeyActions) {
 	aa.Add(ui.KeyActions{
 		ui.KeyS: ui.NewKeyAction("Shell", c.shellCmd, true),
 		ui.KeyT: ui.NewKeyAction("Attach", c.attachCmd, true),
-		ui.KeyV: ui.NewKeyAction("Vim", c.vimCmd, true),
+		ui.KeyV: ui.NewKeyAction("Vim log file", c.vimCmd, true),
 		ui.KeyA: ui.NewKeyAction("Arthas", c.arthasCmd, true),
 	})
 }
@@ -112,7 +112,7 @@ func (c *Container) logOptions(prev bool) (*dao.LogOptions, error) {
 
 func (c *Container) viewLogs(app *App, model ui.Tabular, gvr, path string) {
 	if len(c.getSideCarLogPath()) > 0 {
-		c.tailCmd(nil)
+		c.tailCmd()
 	} else {
 		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
 	}
@@ -148,26 +148,27 @@ func (c *Container) shellCmd(evt *tcell.EventKey) *tcell.EventKey {
 	return c.shellWithCmd(evt, shellCheck)
 }
 
-func (c *Container) tailCmd(evt *tcell.EventKey) *tcell.EventKey {
+func (c *Container) tailCmd() {
 	file := c.getSideCarLogPath()
 	var cmd string
 	if len(file) == 0 {
-		cmd = shellCheck
+		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
 	} else {
 		cmd = "tail -n 100 -f " + file
+		c.shellWithCmd(nil, cmd)
 	}
-	return c.shellWithCmd(evt, cmd)
 }
 
 func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
 	file := c.getSideCarLogPath()
 	var cmd string
 	if len(file) == 0 {
-		cmd = shellCheck
+		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
+		return nil
 	} else {
 		cmd = "vi " + file
+		return c.shellWithCmd(evt, cmd)
 	}
-	return c.shellWithCmd(evt, cmd)
 }
 
 func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
