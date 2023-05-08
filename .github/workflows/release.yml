@@ -23,10 +23,14 @@ jobs:
       - name: Build
         run: make build
 
+      - name: Get Version
+        id: version
+        run: echo "VERSION=$(make -s version)" >> $GITHUB_OUTPUT
+
       - name: Release
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          tag: latest
+          tag: ${{ steps.version.outputs.VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: execs/k9s
