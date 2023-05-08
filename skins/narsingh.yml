@@ -1,9 +1,10 @@
 # -----------------------------------------------------------------------------
-# Snazzy skin
+# Narsingh skin
 # -----------------------------------------------------------------------------
 
 # Skin...
 k9s:
+  # General K9s styles
   body:
     fgColor: "#97979b"
     bgColor: "#282a36"
@@ -85,4 +86,4 @@ k9s:
         fgColor: white
         bgColor: "#282a36"
         toggleOnColor: "#ff5c57"
-        toggleOffColor: white
+        toggleOffColor: "#f3f99d"

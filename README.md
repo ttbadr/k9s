@@ -260,8 +260,8 @@ K9s uses aliases to navigate most K8s resources.
 | Fuzzy find a resource given a filter                           | `/`-f filter⏎                 |                                                                        |
 | Bails out of view/command/filter mode                          | `<esc>`                       |                                                                        |
 | Key mapping to describe, view, edit, view logs,...             | `d`,`v`, `e`, `l`,...         |                                                                        |
-| To view and switch to another Kubernetes context               | `:`ctx⏎                       |                                                                        |
-| To view and switch to another Kubernetes context               | `:`ctx context-name⏎          |                                                                        |
+| To view and switch to another Kubernetes context (Pod view)    | `:`ctx⏎                       |                                                                        |
+| To view and switch directl to another Kubernetes context (Last used view) | `:`ctx context-name⏎          |                                                                        |
 | To view and switch to another Kubernetes namespace             | `:`ns⏎                        |                                                                        |
 | To view all saved resources                                    | `:`screendump or sd⏎          |                                                                        |
 | To delete a resource (TAB and ENTER to confirm)                | `ctrl-d`                      |                                                                        |
@@ -866,8 +866,13 @@ k9s:
       valueColor: royalblue
     # Logs styles.
     logs:
-      fgColor: white
+      fgColor: lightskyblue
       bgColor: black
+      indicator:
+        fgColor: dodgerblue
+        bgColor: black
+        toggleOnColor: limegreen
+        toggleOffColor: gray
 ```
 
 ---
@@ -907,6 +912,8 @@ to make this project a reality!
 * [Fernand Galiana](https://github.com/derailed)
   * <img src="assets/mail.png" width="16" height="auto" alt="email"/>  fernand@imhotep.io
   * <img src="assets/twitter.png" width="16" height="auto" alt="twitter"/> [@kitesurfer](https://twitter.com/kitesurfer?lang=en)
+
+* [Aleksei Romanenko](https://github.com/slimus)
 
 We always enjoy hearing from folks who benefit from our work!
 
