@@ -58,7 +58,7 @@ func (c *Container) bindDangerousKeys(aa ui.KeyActions) {
 	aa.Add(ui.KeyActions{
 		ui.KeyS: ui.NewKeyAction("Shell", c.shellCmd, true),
 		ui.KeyT: ui.NewKeyAction("Attach", c.attachCmd, true),
-		ui.KeyV: ui.NewKeyAction("Vim log file", c.vimCmd, true),
+		ui.KeyV: ui.NewKeyAction("Less log", c.lessCmd, true),
 		ui.KeyA: ui.NewKeyAction("Arthas", c.arthasCmd, true),
 	})
 }
@@ -111,7 +111,7 @@ func (c *Container) logOptions(prev bool) (*dao.LogOptions, error) {
 }
 
 func (c *Container) viewLogs(app *App, model ui.Tabular, gvr, path string) {
-	if len(c.getSideCarLogPath()) > 0 {
+	if len(c.getSidecarLogPath()) > 0 {
 		c.tailCmd()
 	} else {
 		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
@@ -149,7 +149,7 @@ func (c *Container) shellCmd(evt *tcell.EventKey) *tcell.EventKey {
 }
 
 func (c *Container) tailCmd() {
-	file := c.getSideCarLogPath()
+	file := c.getSidecarLogPath()
 	var cmd string
 	if len(file) == 0 {
 		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
@@ -159,14 +159,14 @@ func (c *Container) tailCmd() {
 	}
 }
 
-func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
-	file := c.getSideCarLogPath()
+func (c *Container) lessCmd(evt *tcell.EventKey) *tcell.EventKey {
+	file := c.getSidecarLogPath()
 	var cmd string
 	if len(file) == 0 {
 		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
 		return nil
 	} else {
-		cmd = "vi " + file
+		cmd = "less -F " + file
 		return c.shellWithCmd(evt, cmd)
 	}
 }
@@ -174,7 +174,7 @@ func (c *Container) vimCmd(evt *tcell.EventKey) *tcell.EventKey {
 func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
 	arthasCmd := `fileName=/tmp/arthas.sh
 url1='http://10.116.53.198/scripts/arthas.sh'
-url2='https://github.com/ttbadr/arthas/releases/download/3.6.7/arthas.sh'
+url2='https://github.com/ttbadr/arthas/releases/download/3.6.8/arthas.sh'
 if command -v curl &>/dev/null; then
     curl -I -m 3 -o /dev/null -s http://10.116.53.198
     if [ $? -gt 0 ];then
@@ -288,7 +288,7 @@ func (c *Container) listForwardable(path string) (port.ContainerPortSpecs, map[s
 	return port.FromContainerPorts(path, co.Ports), po.Annotations, true
 }
 
-func (c *Container) getSideCarLogPath() string {
+func (c *Container) getSidecarLogPath() string {
 	po, err := fetchPod(c.App().factory, c.GetTable().Path)
 	if err != nil {
 		return ""
@@ -300,7 +300,7 @@ func (c *Container) getSideCarLogPath() string {
 		return ""
 	}
 
-	if strings.Contains(co.Name, "sidecar") {
+	if len(co.Args) == 3 && strings.Contains(co.Name, "sidecar") {
 		strs := strings.Split(co.Args[2], "tail -n+1 -F")
 		if len(strs) > 1 {
 			return strs[len(strs)-1]
