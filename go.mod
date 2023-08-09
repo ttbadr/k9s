@@ -5,13 +5,13 @@ go 1.20
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/atotto/clipboard v0.1.4
-	github.com/cenkalti/backoff/v4 v4.2.0
+	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/derailed/popeye v0.11.1
 	github.com/derailed/tcell/v2 v2.3.1-rc.3
 	github.com/derailed/tview v0.8.1
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0
-	github.com/fvbommel/sortorder v1.0.2
+	github.com/fvbommel/sortorder v1.1.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/mattn/go-runewidth v0.0.14
@@ -19,19 +19,19 @@ require (
 	github.com/rakyll/hey v0.1.4
 	github.com/rs/zerolog v1.29.1
 	github.com/sahilm/fuzzy v0.1.0
-	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.8.2
-	golang.org/x/text v0.8.0
+	github.com/spf13/cobra v1.7.0
+	github.com/stretchr/testify v1.8.3
+	golang.org/x/text v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.11.1
-	k8s.io/api v0.27.0
-	k8s.io/apiextensions-apiserver v0.26.1
-	k8s.io/apimachinery v0.27.0
-	k8s.io/cli-runtime v0.26.1
-	k8s.io/client-go v0.27.0
+	helm.sh/helm/v3 v3.12.0
+	k8s.io/api v0.27.4
+	k8s.io/apiextensions-apiserver v0.27.1
+	k8s.io/apimachinery v0.27.4
+	k8s.io/cli-runtime v0.27.4
+	k8s.io/client-go v0.27.4
 	k8s.io/klog/v2 v2.90.1
-	k8s.io/kubectl v0.26.1
-	k8s.io/metrics v0.26.2
+	k8s.io/kubectl v0.27.1
+	k8s.io/metrics v0.27.1
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -53,7 +53,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v20.10.21+incompatible // indirect
-	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v20.10.24+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -64,7 +64,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
-	github.com/go-errors/errors v1.0.1 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.5 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -83,9 +83,11 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -149,13 +151,13 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiserver v0.26.2 // indirect
-	k8s.io/component-base v0.26.2 // indirect
-	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
+	k8s.io/apiserver v0.27.1 // indirect
+	k8s.io/component-base v0.27.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5 // indirect
 	oras.land/oras-go v1.2.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/kustomize/api v0.12.1 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
+	sigs.k8s.io/kustomize/api v0.13.2 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.14.1 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
