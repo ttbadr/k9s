@@ -1,6 +1,10 @@
 package view
 
 import (
+	"encoding/base64"
+	"regexp"
+	"strings"
+
 	"github.com/derailed/k9s/internal/client"
 	"github.com/derailed/k9s/internal/ui"
 	"github.com/derailed/tcell/v2"
@@ -8,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/yaml"
 )
 
 // Secret presents a secret viewer.
@@ -65,17 +68,24 @@ func (s *Secret) decode() {
 		return
 	}
 
-	d := make(map[string]string, len(secret.Data))
+	var bd strings.Builder
+	//detect special charactors
+	re := regexp.MustCompile(`[\x80-\xFF]`)
 	for k, val := range secret.Data {
-		d[k] = string(val)
-	}
-	raw, err := yaml.Marshal(d)
-	if err != nil {
-		s.App().Flash().Errf("Error decoding secret %s", err)
-		return
+		bd.WriteString(k)
+		bd.WriteString(" :\n")
+		if len(val) > 0 {
+			decoded := string(val)
+			if re.MatchString(decoded) {
+				bd.WriteString(base64.StdEncoding.EncodeToString(val))
+			} else {
+				bd.WriteString(decoded)
+			}
+		}
+		bd.WriteString("\n")
 	}
 
-	details := NewDetails(s.App(), "Secret Decoder", path, true).Update(string(raw))
+	details := NewDetails(s.App(), "Secret Decoder", path, true).Update(bd.String())
 	if err := s.App().inject(details, false); err != nil {
 		s.App().Flash().Err(err)
 	}

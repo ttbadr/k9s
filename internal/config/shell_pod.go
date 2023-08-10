@@ -5,7 +5,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-const defaultDockerShellImage = "busybox:1.35.0"
+const defaultDockerShellImage = "dockerproxy.com/library/busybox:latest"
 
 // Limits represents resource limits.
 type Limits map[v1.ResourceName]string
@@ -41,7 +41,7 @@ func (s *ShellPod) Validate(client.Connection, KubeSettings) {
 
 func defaultLimits() Limits {
 	return Limits{
-		v1.ResourceCPU:    "100m",
-		v1.ResourceMemory: "100Mi",
+		v1.ResourceCPU:    "200m",
+		v1.ResourceMemory: "256Mi",
 	}
 }

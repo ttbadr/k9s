@@ -7,5 +7,7 @@ type FeatureGates struct {
 
 // NewFeatureGates returns a new feature gate.
 func NewFeatureGates() *FeatureGates {
-	return &FeatureGates{}
+	return &FeatureGates{
+		NodeShell: true,
+	}
 }

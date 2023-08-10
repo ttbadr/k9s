@@ -451,9 +451,6 @@ func (a *App) BailOut() {
 		}
 	}()
 
-	if err := nukeK9sShell(a); err != nil {
-		log.Error().Err(err).Msgf("nuking k9s shell pod")
-	}
 	a.factory.Terminate()
 	a.App.BailOut()
 }

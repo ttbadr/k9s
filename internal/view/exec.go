@@ -191,26 +191,27 @@ func clearScreen() {
 
 const (
 	k9sShell           = "k9s-shell"
-	k9sShellRetryCount = 10
-	k9sShellRetryDelay = 10 * time.Second
+	k9sShellRetryCount = 30
+	k9sShellRetryDelay = 3 * time.Second
 )
 
 func ssh(a *App, node string) error {
-	if err := nukeK9sShell(a); err != nil {
-		return err
-	}
-	defer func() {
-		if err := nukeK9sShell(a); err != nil {
-			log.Error().Err(err).Msgf("nuking k9s shell pod")
-		}
-	}()
-	if err := launchShellPod(a, node); err != nil {
-		return err
-	}
-
 	cl := a.Config.K9s.ActiveCluster()
 	ns := cl.ShellPod.Namespace
-	sshIn(a, client.FQN(ns, k9sShellPodName()), k9sShell)
+	if !shellPodReady(a, ns, node) {
+		if err := nukeK9sShell(a, node); err != nil {
+			return err
+		}
+
+		a.Flash().Infof("Start to lunch shell pod...")
+		if err := launchShellPod(a, node); err != nil {
+			a.Flash().Errf("Fail to create shell pod")
+			return err
+		}
+	}
+
+	a.Flash().Infof("SSH to shell pod...")
+	sshIn(a, client.FQN(ns, k9sShellPodName(node)), k9sShell)
 
 	return nil
 }
@@ -242,7 +243,7 @@ func sshIn(a *App, fqn, co string) {
 	}
 }
 
-func nukeK9sShell(a *App) error {
+func nukeK9sShell(a *App, node string) error {
 	clName := a.Config.K9s.CurrentCluster
 	if !a.Config.K9s.Clusters[clName].FeatureGates.NodeShell {
 		return nil
@@ -258,7 +259,7 @@ func nukeK9sShell(a *App) error {
 		return err
 	}
 
-	err = dial.CoreV1().Pods(ns).Delete(ctx, k9sShellPodName(), metav1.DeleteOptions{})
+	err = dial.CoreV1().Pods(ns).Delete(ctx, k9sShellPodName(node), metav1.DeleteOptions{})
 	if kerrors.IsNotFound(err) {
 		return nil
 	}
@@ -284,7 +285,7 @@ func launchShellPod(a *App, node string) error {
 	}
 
 	for i := 0; i < k9sShellRetryCount; i++ {
-		o, err := a.factory.Get("v1/pods", client.FQN(ns, k9sShellPodName()), true, labels.Everything())
+		o, err := a.factory.Get("v1/pods", client.FQN(ns, k9sShellPodName(node)), true, labels.Everything())
 		if err != nil {
 			time.Sleep(k9sShellRetryDelay)
 			continue
@@ -294,17 +295,44 @@ func launchShellPod(a *App, node string) error {
 			return err
 		}
 		log.Debug().Msgf("Checking shell pod [%d] %v", i, pod.Status.Phase)
-		if pod.Status.Phase == v1.PodRunning {
+		switch pod.Status.Phase {
+		case v1.PodSucceeded, v1.PodRunning:
 			return nil
+		case v1.PodFailed, v1.PodUnknown:
+			return fmt.Errorf("shell pod status is %s, reason: %s", pod.Status.Phase, pod.Status.Reason)
+		default:
+			time.Sleep(k9sShellRetryDelay)
 		}
-		time.Sleep(k9sShellRetryDelay)
 	}
 
-	return fmt.Errorf("Unable to launch shell pod on node %s", node)
+	return fmt.Errorf("unable to launch shell pod on node %s", node)
 }
 
-func k9sShellPodName() string {
-	return fmt.Sprintf("%s-%d", k9sShell, os.Getpid())
+func shellPodReady(a *App, ns string, node string) bool {
+	for i := 0; i < 3; i++ {
+		o, err := a.factory.Get("v1/pods", client.FQN(ns, k9sShellPodName(node)), true, labels.Everything())
+		if err != nil {
+			return false
+		}
+		var pod v1.Pod
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &pod); err != nil {
+			return false
+		}
+		log.Debug().Msgf("Checking shell pod [%d] %v", i, pod.Status.Phase)
+		switch pod.Status.Phase {
+		case v1.PodSucceeded, v1.PodRunning:
+			return true
+		case v1.PodFailed, v1.PodUnknown:
+			return false
+		default:
+			time.Sleep(k9sShellRetryDelay)
+		}
+	}
+	return false
+}
+
+func k9sShellPodName(node string) string {
+	return fmt.Sprintf("%s-%s", k9sShell, node)
 }
 
 func k9sShellPod(node string, cfg *config.ShellPod) v1.Pod {
@@ -337,7 +365,7 @@ func k9sShellPod(node string, cfg *config.ShellPod) v1.Pod {
 
 	return v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      k9sShellPodName(),
+			Name:      k9sShellPodName(node),
 			Namespace: cfg.Namespace,
 			Labels:    cfg.Labels,
 		},
