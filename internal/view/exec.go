@@ -203,14 +203,14 @@ func ssh(a *App, node string) error {
 			return err
 		}
 
-		a.Flash().Infof("Start to lunch shell pod...")
+		log.Debug().Msgf("Start to lunch shell pod...")
 		if err := launchShellPod(a, node); err != nil {
 			a.Flash().Errf("Fail to create shell pod")
 			return err
 		}
 	}
 
-	a.Flash().Infof("SSH to shell pod...")
+	log.Debug().Msgf("SSH to shell pod...")
 	sshIn(a, client.FQN(ns, k9sShellPodName(node)), k9sShell)
 
 	return nil

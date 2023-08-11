@@ -2,7 +2,7 @@ package view
 
 import (
 	"encoding/base64"
-	"regexp"
+	"net/http"
 	"strings"
 
 	"github.com/derailed/k9s/internal/client"
@@ -69,18 +69,24 @@ func (s *Secret) decode() {
 	}
 
 	var bd strings.Builder
-	//detect special charactors
-	re := regexp.MustCompile(`[\x80-\xFF]`)
 	for k, val := range secret.Data {
 		bd.WriteString(k)
-		bd.WriteString(" :\n")
 		if len(val) > 0 {
-			decoded := string(val)
-			if re.MatchString(decoded) {
+			// show base64 string if the secret is not a text file
+			if isBinary(val) {
+				bd.WriteString(" : <Not decoded for a binary file>\n")
 				bd.WriteString(base64.StdEncoding.EncodeToString(val))
 			} else {
-				bd.WriteString(decoded)
+				s := strings.TrimRight(string(val), "\n")
+				bd.WriteString(" : ")
+				if strings.Contains(s, "\n") {
+					bd.WriteString("\n")
+				}
+				bd.WriteString(s)
 			}
+			bd.WriteString("\n")
+		} else {
+			bd.WriteString(" :\n")
 		}
 		bd.WriteString("\n")
 	}
@@ -89,4 +95,8 @@ func (s *Secret) decode() {
 	if err := s.App().inject(details, false); err != nil {
 		s.App().Flash().Err(err)
 	}
+}
+
+func isBinary(decoded []byte) bool {
+	return http.DetectContentType(decoded) == "application/octet-stream"
 }
