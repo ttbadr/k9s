@@ -111,11 +111,7 @@ func (c *Container) logOptions(prev bool) (*dao.LogOptions, error) {
 }
 
 func (c *Container) viewLogs(app *App, model ui.Tabular, gvr, path string) {
-	if len(c.getSidecarLogPath()) > 0 {
-		c.tailCmd()
-	} else {
-		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
-	}
+	c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
 }
 
 // Handlers...
