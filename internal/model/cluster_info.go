@@ -2,10 +2,6 @@ package model
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/derailed/k9s/internal/client"
@@ -15,7 +11,6 @@ import (
 )
 
 const (
-	k9sGitURL       = "https://api.github.com/repos/derailed/k9s/releases/latest"
 	cacheSize       = 10
 	cacheExpiry     = 1 * time.Hour
 	k9sLatestRevKey = "k9sRev"
@@ -98,7 +93,7 @@ func (c *ClusterInfo) fetchK9sLatestRev() string {
 		return rev.(string)
 	}
 
-	latestRev, err := fetchLatestRev()
+	latestRev, err := FetchLatestRev("ttbadr", "k9s")
 	if err != nil {
 		log.Warn().Msgf("k9s latest rev fetch failed %s", err)
 	} else {
@@ -132,7 +127,7 @@ func (c *ClusterInfo) Refresh() {
 		}
 	}
 	data.K9sVer = c.version
-	v1, v2 := NewSemVer(data.K9sVer), NewSemVer("")
+	v1, v2 := NewSemVer(data.K9sVer), NewSemVer(c.fetchK9sLatestRev())
 	data.K9sVer, data.K9sLatest = v1.String(), v2.String()
 	if v1.IsCurrent(v2) {
 		data.K9sLatest = ""
@@ -176,42 +171,4 @@ func (c *ClusterInfo) fireNoMetaChanged(data ClusterMeta) {
 	for _, l := range c.listeners {
 		l.ClusterInfoUpdated(data)
 	}
-}
-
-// Helpers...
-
-func fetchLatestRev() (string, error) {
-	log.Debug().Msgf("Fetching latest k9s rev...")
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, k9sGitURL, nil)
-	if err != nil {
-		return "", err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		if resp.Body != nil {
-			_ = resp.Body.Close()
-		}
-	}()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	m := make(map[string]interface{}, 20)
-	if err := json.Unmarshal(b, &m); err != nil {
-		return "", err
-	}
-
-	if v, ok := m["name"]; ok {
-		log.Debug().Msgf("K9s latest rev: %q", v.(string))
-		return v.(string), nil
-	}
-
-	return "", errors.New("No version found")
 }

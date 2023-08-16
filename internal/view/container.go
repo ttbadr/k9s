@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
+	"time"
 
 	"github.com/derailed/k9s/internal"
 	"github.com/derailed/k9s/internal/client"
 	"github.com/derailed/k9s/internal/dao"
+	"github.com/derailed/k9s/internal/model"
 	"github.com/derailed/k9s/internal/port"
 	"github.com/derailed/k9s/internal/render"
 	"github.com/derailed/k9s/internal/ui"
@@ -144,17 +147,6 @@ func (c *Container) shellCmd(evt *tcell.EventKey) *tcell.EventKey {
 	return c.shellWithCmd(evt, shellCheck)
 }
 
-func (c *Container) tailCmd() {
-	file := c.getSidecarLogPath()
-	var cmd string
-	if len(file) == 0 {
-		c.ResourceViewer.(*LogsExtender).showLogs(c.GetTable().Path, false)
-	} else {
-		cmd = "tail -n 100 -f " + file
-		c.shellWithCmd(nil, cmd)
-	}
-}
-
 func (c *Container) lessCmd(evt *tcell.EventKey) *tcell.EventKey {
 	file := c.getSidecarLogPath()
 	var cmd string
@@ -168,26 +160,50 @@ func (c *Container) lessCmd(evt *tcell.EventKey) *tcell.EventKey {
 }
 
 func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
-	arthasCmd := `fileName=/tmp/arthas.sh
-url1='http://10.116.53.198/scripts/arthas.sh'
-url2='https://github.com/ttbadr/arthas/releases/download/3.6.8/arthas.sh'
-if command -v curl &>/dev/null; then
-    curl -I -m 3 -o /dev/null -s http://10.116.53.198
-    if [ $? -gt 0 ];then
-        curl -L $url2 -o $fileName
+	fileName := "arthas-bin.tgz"
+	var address string
+	if checkAddress("10.116.53.198") {
+		address = "http://10.116.53.198/scripts/repo/" + fileName
+	} else if checkAddress("github.com") {
+		user, repo := "ttbadr", "arthas"
+		ver, err := model.FetchLatestRev(user, repo)
+		if err != nil {
+			c.App().Flash().Errf("Could not get latest arthas version")
+			return nil
+		}
+		address = fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/%s", user, repo, ver, fileName)
+	} else {
+		c.App().Flash().Errf("Could not download arthas")
+		return nil
+	}
+	log.Info().Msgf("Downloading arthas from %s", address)
+
+	arthasCmd := "fileName=" + fileName + "\nurl=" + address + `
+unset -v _JAVA_OPTIONS
+home=/tmp/arthas
+if [ ! -d $home ]; then
+    mkdir $home && cd $home
+    echo 'Downloading arthas...'
+    if command -v curl &>/dev/null; then
+		curl -L $url -s -o $fileName
     else
-        curl -L $url1 -o $fileName
+		wget $url -q -O $fileName
     fi
-else
-    wget -T 3 --spider -S "http://10.116.53.198" &>/dev/null
-    if [ $? -gt 0 ];then
-        wget $url2 -O $fileName
-    else
-        wget $url1 -O $fileName
-    fi
+    tar -xf $fileName
+    rm -f $fileName
 fi
-source $fileName`
+cd $home && java -jar arthas-boot.jar`
+
 	return c.shellWithCmd(evt, arthasCmd)
+}
+
+func checkAddress(ipOrDomain string) bool {
+	conn, err := net.DialTimeout("tcp", ipOrDomain+":80", 6*time.Second)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
 }
 
 func (c *Container) shellWithCmd(evt *tcell.EventKey, cmd string) *tcell.EventKey {

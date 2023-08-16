@@ -51,5 +51,20 @@ func NormalizeVersion(version string) string {
 
 // IsCurrent asserts if at latest release.
 func (v *SemVer) IsCurrent(latest *SemVer) bool {
-	return v.Major >= latest.Major && v.Minor >= latest.Minor && v.Patch >= latest.Patch
+	if v.Major > latest.Major {
+		return true
+	} else if v.Major < latest.Major {
+		return false
+	}
+	if v.Minor > latest.Minor {
+		return true
+	} else if v.Minor < latest.Minor {
+		return false
+	}
+	if v.Patch > latest.Patch {
+		return true
+	} else if v.Patch < latest.Patch {
+		return false
+	}
+	return true
 }
