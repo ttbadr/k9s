@@ -11,7 +11,7 @@ DATE       ?= $(shell TZ=UTC date -j -f "%s" ${SOURCE_DATE_EPOCH} +"%Y-%m-%dT%H:
 else
 DATE       ?= $(shell date -u -d @${SOURCE_DATE_EPOCH} +"%Y-%m-%dT%H:%M:%SZ")
 endif
-VERSION    ?= v1.0.0
+VERSION    ?= v1.0.1
 IMG_NAME   := derailed/k9s
 IMAGE      := ${IMG_NAME}:${VERSION}
 
