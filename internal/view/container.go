@@ -173,7 +173,7 @@ func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
 		}
 		address = fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/%s", user, repo, ver, fileName)
 	} else {
-		c.App().Flash().Errf("Could not download arthas")
+		c.App().Flash().Errf("Could not access arthas file server")
 		return nil
 	}
 	log.Info().Msgf("Downloading arthas from %s", address)
@@ -182,15 +182,15 @@ func (c *Container) arthasCmd(evt *tcell.EventKey) *tcell.EventKey {
 unset -v _JAVA_OPTIONS
 home=/tmp/arthas
 if [ ! -d $home ]; then
-    mkdir $home && cd $home
-    echo 'Downloading arthas...'
-    if command -v curl &>/dev/null; then
-		curl -L $url -s -o $fileName
-    else
-		wget $url -q -O $fileName
-    fi
-    tar -xf $fileName
-    rm -f $fileName
+	mkdir $home
+	echo "Downloading arthas from $url"
+	if command -v wget &>/dev/null; then
+		wget $url -q -O $home/$fileName || (rm -rf $home;echo 'Failed to download arthas with wget';sleep 5;)
+	else
+		curl -L $url -s -o $home/$fileName || (rm -rf $home;echo 'Failed to download arthas with curl';sleep 5;)
+	fi
+	cd $home && tar -xf $fileName || (rm -rf $home;echo 'Failed to extract arthas';sleep 5;)
+	rm -f $fileName
 fi
 cd $home && java -jar arthas-boot.jar`
 
