@@ -2,7 +2,7 @@ name: release
 on:
   push:
     branches:
-      - master
+      - cms
 
 jobs:
   build:
@@ -28,9 +28,9 @@ jobs:
         run: zip k9s.zip execs/*;echo "VERSION=$(make -s version)" >> $GITHUB_OUTPUT
 
       - name: Release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.14.0
         with:
           allowUpdates: true
-          tag: ${{ steps.version.outputs.VERSION }}
+          tag: "${{ steps.version.outputs.VERSION }}-${{ github.ref_name }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: k9s.zip
