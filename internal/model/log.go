@@ -258,7 +258,6 @@ func (l *Log) Append(line *dao.LogItem) {
 	}
 	l.mx.Lock()
 	defer l.mx.Unlock()
-	l.logOptions.SinceTime = line.GetTimestamp()
 	if l.lines.Len() < int(l.logOptions.Lines) {
 		l.lines.Add(line)
 		return

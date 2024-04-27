@@ -5,8 +5,7 @@ package config
 
 const (
 	// DefaultLoggerTailCount tracks default log tail size.
-	DefaultLoggerTailCount = 100
-
+	DefaultLoggerTailCount = 1000
 	// MaxLogThreshold sets the max value for log size.
 	MaxLogThreshold = 5000
 

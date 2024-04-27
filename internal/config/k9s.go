@@ -49,16 +49,17 @@ type K9s struct {
 // NewK9s create a new K9s configuration.
 func NewK9s(conn client.Connection, ks data.KubeSettings) *K9s {
 	return &K9s{
-		RefreshRate:   defaultRefreshRate,
-		MaxConnRetry:  defaultMaxConnRetry,
-		ScreenDumpDir: AppDumpsDir,
-		Logger:        NewLogger(),
-		Thresholds:    NewThreshold(),
-		ShellPod:      NewShellPod(),
-		ImageScans:    NewImageScans(),
-		dir:           data.NewDir(AppContextsDir),
-		conn:          conn,
-		ks:            ks,
+		RefreshRate:        defaultRefreshRate,
+		MaxConnRetry:       defaultMaxConnRetry,
+		ScreenDumpDir:      AppDumpsDir,
+		Logger:             NewLogger(),
+		Thresholds:         NewThreshold(),
+		ShellPod:           NewShellPod(),
+		ImageScans:         NewImageScans(),
+		SkipLatestRevCheck: true,
+		dir:                data.NewDir(AppContextsDir),
+		conn:               conn,
+		ks:                 ks,
 	}
 }
 
