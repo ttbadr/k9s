@@ -6,8 +6,10 @@ package view
 import (
 	"context"
 	"fmt"
+	"github.com/derailed/k9s/internal/ui/dialog"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/derailed/k9s/internal/config"
 
@@ -41,6 +43,57 @@ func (s *ScaleExtender) bindKeys(aa *ui.KeyActions) {
 			Dangerous: true,
 		},
 	))
+	aa.Add(ui.KeyG, ui.NewKeyActionWithOpts("Scale-Restart", s.fullRestartCmd,
+		ui.ActionOpts{
+			Visible:   true,
+			Dangerous: true,
+		},
+	))
+}
+
+func (s *ScaleExtender) fullRestartCmd(evt *tcell.EventKey) *tcell.EventKey {
+	paths := s.GetTable().GetSelectedItems()
+	if len(paths) != 1 || paths[0] == "" {
+		return nil
+	}
+
+	s.Stop()
+	defer s.Start()
+	msg := fmt.Sprintf("Scale Restart %s %s?", singularize(s.GVR().R()), paths[0])
+	dialog.ShowConfirm(s.App().Styles.Dialog(), s.App().Content.Pages, "Confirm Scale Restart", msg, func() {
+		ctx, cancel := context.WithTimeout(context.Background(), s.App().Conn().Config().CallTimeout())
+		defer cancel()
+		factor, _ := s.getReplicas()
+		if factor == "0" {
+			return
+		}
+		if err := s.scale(ctx, paths[0], 0); err != nil {
+			s.App().Flash().Err(err)
+		} else {
+			s.App().Flash().Infof("Scale to 0 for `%s...", paths[0])
+		}
+		time.Sleep(2 * time.Second)
+		count, _ := strconv.Atoi(factor)
+		if err := s.scale(ctx, paths[0], count); err != nil {
+			s.App().Flash().Err(err)
+		} else {
+			s.App().Flash().Infof("Scale to %d for `%s...", count, paths[0])
+		}
+	}, func() {})
+
+	return nil
+}
+
+func (s *ScaleExtender) getReplicas() (string, error) {
+	replicas, err := s.valueOf("READY")
+	if err != nil {
+		return "0", err
+	}
+	tokens := strings.Split(replicas, "/")
+	if len(tokens) < 2 {
+		return "0", fmt.Errorf("unable to locate replicas from %s", replicas)
+	}
+	return strings.TrimRight(tokens[1], ui.DeltaSign), nil
 }
 
 func (s *ScaleExtender) scaleCmd(evt *tcell.EventKey) *tcell.EventKey {
