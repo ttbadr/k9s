@@ -39,16 +39,15 @@ const (
 type Log struct {
 	*tview.Flex
 
-	app               *App
-	logs              *Logger
-	indicator         *LogIndicator
-	ansiWriter        io.Writer
-	model             *model.Log
-	cancelFn          context.CancelFunc
-	cancelUpdates     bool
-	mx                sync.Mutex
-	follow            bool
-	requestOneRefresh bool
+	app           *App
+	logs          *Logger
+	indicator     *LogIndicator
+	ansiWriter    io.Writer
+	model         *model.Log
+	cancelFn      context.CancelFunc
+	cancelUpdates bool
+	mx            sync.Mutex
+	follow        bool
 }
 
 var _ model.Component = (*Log)(nil)
@@ -245,20 +244,20 @@ func (l *Log) Name() string { return logTitle }
 
 func (l *Log) bindKeys() {
 	l.logs.Actions().Bulk(ui.KeyMap{
-		ui.Key0:         ui.NewKeyAction("tail", l.sinceCmd(-1), true),
-		ui.Key1:         ui.NewKeyAction("head", l.sinceCmd(0), true),
-		ui.Key2:         ui.NewKeyAction("1m", l.sinceCmd(60), true),
-		ui.Key3:         ui.NewKeyAction("5m", l.sinceCmd(5*60), true),
-		ui.Key4:         ui.NewKeyAction("15m", l.sinceCmd(15*60), true),
-		ui.Key5:         ui.NewKeyAction("30m", l.sinceCmd(30*60), true),
-		ui.Key6:         ui.NewKeyAction("1h", l.sinceCmd(60*60), true),
+		ui.KeyH:         ui.NewKeyAction("head", l.sinceCmd(0), true),
+		ui.KeyT:         ui.NewKeyAction("tail", l.sinceCmd(-1), true),
+		ui.Key1:         ui.NewKeyAction("1m", l.sinceCmd(60), true),
+		ui.Key2:         ui.NewKeyAction("5m", l.sinceCmd(5*60), true),
+		ui.Key3:         ui.NewKeyAction("15m", l.sinceCmd(15*60), true),
+		ui.Key4:         ui.NewKeyAction("30m", l.sinceCmd(30*60), true),
+		ui.Key5:         ui.NewKeyAction("1h", l.sinceCmd(60*60), true),
 		tcell.KeyEnter:  ui.NewSharedKeyAction("Filter", l.filterCmd, false),
 		tcell.KeyEscape: ui.NewKeyAction("Back", l.resetCmd, false),
 		ui.KeyShiftC:    ui.NewKeyAction("Clear", l.clearCmd, true),
 		ui.KeyM:         ui.NewKeyAction("Mark", l.markCmd, true),
 		ui.KeyS:         ui.NewKeyAction("Toggle AutoScroll", l.toggleAutoScrollCmd, true),
 		ui.KeyF:         ui.NewKeyAction("Toggle FullScreen", l.toggleFullScreenCmd, true),
-		ui.KeyT:         ui.NewKeyAction("Toggle Timestamp", l.toggleTimestampCmd, true),
+		ui.KeyShiftT:    ui.NewKeyAction("Toggle Timestamp", l.toggleTimestampCmd, true),
 		ui.KeyW:         ui.NewKeyAction("Toggle Wrap", l.toggleTextWrapCmd, true),
 		tcell.KeyCtrlS:  ui.NewKeyAction("Save", l.SaveCmd, true),
 		ui.KeyC:         ui.NewKeyAction("Copy", cpCmd(l.app.Flash(), l.logs.TextView), true),
@@ -346,11 +345,8 @@ func (l *Log) Flush(lines [][]byte) {
 		}
 	}()
 
-	if len(lines) == 0 || (!l.requestOneRefresh && !l.indicator.AutoScroll()) || l.cancelUpdates {
+	if len(lines) == 0 || !l.indicator.AutoScroll() || l.cancelUpdates {
 		return
-	}
-	if l.requestOneRefresh {
-		l.requestOneRefresh = false
 	}
 	for i := 0; i < len(lines); i++ {
 		if l.cancelUpdates {
@@ -375,7 +371,6 @@ func (l *Log) sinceCmd(n int) func(evt *tcell.EventKey) *tcell.EventKey {
 		} else {
 			l.model.SetSinceSeconds(ctx, int64(n))
 		}
-		l.requestOneRefresh = true
 		l.updateTitle()
 
 		return nil
