@@ -6,6 +6,7 @@ package view
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"github.com/derailed/k9s/internal/ui/dialog"
 	"strconv"
 	"strings"
@@ -36,18 +37,30 @@ func (s *ScaleExtender) bindKeys(aa *ui.KeyActions) {
 	if s.App().Config.IsReadOnly() {
 		return
 	}
-	aa.Add(ui.KeyS, ui.NewKeyActionWithOpts("Scale", s.scaleCmd,
-		ui.ActionOpts{
-			Visible:   true,
-			Dangerous: true,
-		},
-	))
-	aa.Add(ui.KeyG, ui.NewKeyActionWithOpts("Scale-Restart", s.fullRestartCmd,
-		ui.ActionOpts{
-			Visible:   true,
-			Dangerous: true,
-		},
-	))
+	
+	meta, err := dao.MetaAccess.MetaFor(s.GVR())
+	if err != nil {
+		slog.Error("No meta information found",
+			slogs.GVR, s.GVR(),
+			slogs.Error, err,
+		)
+		return
+	}
+
+	if !dao.IsCRD(meta) || dao.IsScalable(meta) {
+		aa.Add(ui.KeyS, ui.NewKeyActionWithOpts("Scale", s.scaleCmd,
+			ui.ActionOpts{
+				Visible:   true,
+				Dangerous: true,
+			},
+		))
+		aa.Add(ui.KeyG, ui.NewKeyActionWithOpts("Scale-Restart", s.fullRestartCmd,
+			ui.ActionOpts{
+				Visible:   true,
+				Dangerous: true,
+			},
+		))
+	}
 }
 
 func (s *ScaleExtender) fullRestartCmd(evt *tcell.EventKey) *tcell.EventKey {
