@@ -23,6 +23,7 @@ func NewSecret(gvr client.GVR) ResourceViewer {
 	s := Secret{
 		ResourceViewer: NewOwnerExtender(NewBrowser(gvr)),
 	}
+	s.GetTable().SetEnterFn(s.decodeEnter)
 	s.AddBindKeysFn(s.bindKeys)
 
 	return &s
@@ -30,9 +31,12 @@ func NewSecret(gvr client.GVR) ResourceViewer {
 
 func (s *Secret) bindKeys(aa *ui.KeyActions) {
 	aa.Bulk(ui.KeyMap{
-		ui.KeyX: ui.NewKeyAction("Decode", s.decodeCmd, true),
 		ui.KeyU: ui.NewKeyAction("UsedBy", s.refCmd, true),
 	})
+}
+
+func (s *Secret) decodeEnter(app *App, model ui.Tabular, gvr client.GVR, path string) {
+	s.decode()
 }
 
 func (s *Secret) refCmd(evt *tcell.EventKey) *tcell.EventKey {
@@ -40,27 +44,32 @@ func (s *Secret) refCmd(evt *tcell.EventKey) *tcell.EventKey {
 }
 
 func (s *Secret) decodeCmd(evt *tcell.EventKey) *tcell.EventKey {
+	s.decode()
+	return nil
+}
+
+func (s *Secret) decode() {
 	path := s.GetTable().GetSelectedItem()
 	if path == "" {
-		return evt
+		return
 	}
 
 	o, err := s.App().factory.Get(s.GVR().String(), path, true, labels.Everything())
 	if err != nil {
 		s.App().Flash().Err(err)
-		return nil
+		return
 	}
 
 	d, err := dao.ExtractSecrets(o.(*unstructured.Unstructured))
 	if err != nil {
 		s.App().Flash().Err(err)
-		return nil
+		return
 	}
 
 	raw, err := data.WriteYAML(d)
 	if err != nil {
 		s.App().Flash().Errf("Error decoding secret %s", err)
-		return nil
+		return
 	}
 
 	details := NewDetails(s.App(), "Secret Decoder", path, contentYAML, true).Update(string(raw))
@@ -68,5 +77,5 @@ func (s *Secret) decodeCmd(evt *tcell.EventKey) *tcell.EventKey {
 		s.App().Flash().Err(err)
 	}
 
-	return nil
+	return
 }

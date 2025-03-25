@@ -11,7 +11,7 @@ DATE       ?= $(shell TZ=UTC date -j -f "%s" ${SOURCE_DATE_EPOCH} +"%Y-%m-%dT%H:
 else
 DATE       ?= $(shell date -u -d @${SOURCE_DATE_EPOCH} +"%Y-%m-%dT%H:%M:%SZ")
 endif
-VERSION    ?= v0.40.10
+VERSION    ?= v1.0.2
 IMG_NAME   := derailed/k9s
 IMAGE      := ${IMG_NAME}:${VERSION}
 
@@ -26,8 +26,11 @@ cover:  ## Run test coverage suite
 
 build:  ## Builds the CLI
 	@CGO_ENABLED=${CGO_ENABLED} go build ${GO_FLAGS} \
-	-ldflags "-w -s -X ${PACKAGE}/cmd.version=${VERSION} -X ${PACKAGE}/cmd.commit=${GIT_REV} -X ${PACKAGE}/cmd.date=${DATE}" \
-	-a -tags=${GO_TAGS} -o ${OUTPUT_BIN} main.go
+		-ldflags "-w -s -X ${PACKAGE}/cmd.version=${VERSION} -X ${PACKAGE}/cmd.commit=${GIT_REV} -X ${PACKAGE}/cmd.date=${DATE}" \
+		-a -tags=${GO_TAGS} -o ${OUTPUT_BIN} main.go
+	@CGO_ENABLED=${CGO_ENABLED} GOOS=windows GOARCH=amd64 go build ${GO_FLAGS} \
+    	-ldflags "-w -s -X ${PACKAGE}/cmd.version=${VERSION} -X ${PACKAGE}/cmd.commit=${GIT_REV} -X ${PACKAGE}/cmd.date=${DATE}" \
+    	-a -tags=${GO_TAGS} -o ${OUTPUT_BIN}.exe main.go
 
 kubectl-stable-version:  ## Get kubectl latest stable version
 	@curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt
@@ -37,3 +40,6 @@ img:    ## Build Docker Image
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":[^:]*?## "}; {printf "\033[38;5;69m%-30s\033[38;5;38m %s\033[0m\n", $$1, $$2}'
+
+version:
+	@echo ${VERSION}
