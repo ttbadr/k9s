@@ -43,3 +43,6 @@ help:
 
 version:
 	@echo ${VERSION}
+
+go-version:
+	@cat go.mod | grep '^go ' | grep -oP '(\d+\.)+\d+'
