@@ -6,9 +6,10 @@ package view
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"github.com/derailed/k9s/internal/ui/dialog"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/derailed/tcell/v2"
 	"github.com/derailed/tview"
@@ -35,24 +36,63 @@ func (s *ScaleExtender) bindKeys(aa *ui.KeyActions) {
 	if s.App().Config.IsReadOnly() {
 		return
 	}
+	aa.Add(ui.KeyS, ui.NewKeyActionWithOpts("Scale", s.scaleCmd,
+		ui.ActionOpts{
+			Visible:   true,
+			Dangerous: true,
+		},
+	))
+	aa.Add(ui.KeyG, ui.NewKeyActionWithOpts("Scale-Restart", s.fullRestartCmd,
+		ui.ActionOpts{
+			Visible:   true,
+			Dangerous: true,
+		},
+	))
+}
 
-	meta, err := dao.MetaAccess.MetaFor(s.GVR())
+func (s *ScaleExtender) fullRestartCmd(evt *tcell.EventKey) *tcell.EventKey {
+	paths := s.GetTable().GetSelectedItems()
+	if len(paths) != 1 || paths[0] == "" {
+		return nil
+	}
+
+	s.Stop()
+	defer s.Start()
+	msg := fmt.Sprintf("Scale Restart %s %s?", singularize(s.GVR().R()), paths[0])
+	dialog.ShowConfirm(s.App().Styles.Dialog(), s.App().Content.Pages, "Confirm Scale Restart", msg, func() {
+		ctx, cancel := context.WithTimeout(context.Background(), s.App().Conn().Config().CallTimeout())
+		defer cancel()
+		factor, _ := s.getReplicas()
+		if factor == "0" {
+			return
+		}
+		if err := s.scale(ctx, paths[0], 0); err != nil {
+			s.App().Flash().Err(err)
+		} else {
+			s.App().Flash().Infof("Scale to 0 for `%s...", paths[0])
+		}
+		time.Sleep(2 * time.Second)
+		count, _ := strconv.Atoi(factor)
+		if err := s.scale(ctx, paths[0], count); err != nil {
+			s.App().Flash().Err(err)
+		} else {
+			s.App().Flash().Infof("Scale to %d for `%s...", count, paths[0])
+		}
+	}, func() {})
+
+	return nil
+}
+
+func (s *ScaleExtender) getReplicas() (string, error) {
+	replicas, err := s.valueOf("READY")
 	if err != nil {
-		slog.Error("No meta information found",
-			slogs.GVR, s.GVR(),
-			slogs.Error, err,
-		)
-		return
+		return "0", err
 	}
-
-	if !dao.IsCRD(meta) || dao.IsScalable(meta) {
-		aa.Add(ui.KeyS, ui.NewKeyActionWithOpts("Scale", s.scaleCmd,
-			ui.ActionOpts{
-				Visible:   true,
-				Dangerous: true,
-			},
-		))
+	tokens := strings.Split(replicas, "/")
+	if len(tokens) < 2 {
+		return "0", fmt.Errorf("unable to locate replicas from %s", replicas)
 	}
+	return strings.TrimRight(tokens[1], ui.DeltaSign), nil
 }
 
 func (s *ScaleExtender) scaleCmd(evt *tcell.EventKey) *tcell.EventKey {

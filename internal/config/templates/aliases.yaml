@@ -1,9 +1,16 @@
 aliases:
   dp: deployments
-  sec: v1/secrets
-  jo: jobs
+  pd: pods
+  ss: statefulsets
+  cj: cronjobs
+  ds: daemonsets
+  cm: configmaps
+  sc: v1/secrets
+  jb: jobs
   cr: clusterroles
   crb: clusterrolebindings
-  ro: roles
+  rl: roles
   rb: rolebindings
   np: networkpolicies
+  pv: persistentvolumes
+  pvc: persistentvolumeclaims
