@@ -201,7 +201,7 @@ func formatNSMenu(i int, name string, styles config.Frame) string {
 	fmat = strings.Replace(fmat, "[fg", "["+styles.Menu.FgColor.String(), 1)
 	fmat = strings.Replace(fmat, "fgstyle]", styles.Menu.FgStyle.ToShortString()+"]", 1)
 
-	return fmt.Sprintf(fmat, i, name)
+	return fmt.Sprintf(fmat, i, Truncate(name, 10))
 }
 
 func formatPlainMenu(h model.MenuHint, size int, styles config.Frame) string {
@@ -211,6 +211,5 @@ func formatPlainMenu(h model.MenuHint, size int, styles config.Frame) string {
     fmat = strings.Replace(fmat, ":bg:", ":"+styles.Title.BgColor.String()+":", -1)
     fmat = strings.Replace(fmat, "fgstyle]", styles.Menu.FgStyle.ToShortString()+"]", 1)
 
-    truncatedDesc := Truncate(h.Description, 18)
-    return fmt.Sprintf(fmat, ToMnemonic(h.Mnemonic), truncatedDesc)
+    return fmt.Sprintf(fmat, ToMnemonic(h.Mnemonic), h.Description)
 }

@@ -89,11 +89,11 @@ func (c *ClusterInfo) infoCell(t string) *tview.TableCell {
 }
 
 func (c *ClusterInfo) setCell(row int, s string) int {
-	if s == "" {
-		s = render.NAValue
-	}
-	c.GetCell(row, 1).SetText(s)
-	return row + 1
+    if s == "" {
+        s = render.NAValue
+    }
+    c.GetCell(row, 1).SetText(ui.Truncate(s, 12))
+    return row + 1
 }
 
 // ClusterInfoUpdated notifies the cluster meta was updated.
