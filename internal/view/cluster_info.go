@@ -92,7 +92,7 @@ func (c *ClusterInfo) setCell(row int, s string) int {
     if s == "" {
         s = render.NAValue
     }
-    c.GetCell(row, 1).SetText(ui.Truncate(s, 12))
+    c.GetCell(row, 1).SetText(s)
     return row + 1
 }
 
@@ -114,9 +114,10 @@ func (c *ClusterInfo) ClusterInfoChanged(prev, curr model.ClusterMeta) {
 	c.app.QueueUpdateDraw(func() {
 		c.Clear()
 		c.layout()
-		row := c.setCell(0, curr.Context)
-		row = c.setCell(row, curr.Cluster)
-		row = c.setCell(row, curr.User)
+		truncatLength := 18
+		row := c.setCell(0, ui.Truncate(curr.Context, truncatLength))
+		row = c.setCell(row, ui.Truncate(curr.Cluster, truncatLength))
+		row = c.setCell(row, ui.Truncate(curr.User, truncatLength))
 		if curr.K9sLatest != "" {
 			row = c.setCell(row, fmt.Sprintf("%s ⚡️[cadetblue::b]%s", curr.K9sVer, curr.K9sLatest))
 		} else {
