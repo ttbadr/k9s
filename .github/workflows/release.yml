@@ -29,7 +29,13 @@ jobs:
 
       - name: Get k9s version
         id: version
-        run: zip k9s.zip execs/*;echo "VERSION=$(make version)" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(make version)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          cd execs
+          for file in *; do
+            tar czf "${file}.tgz" "$file"
+          done
 
       - name: Release
         uses: ncipollo/release-action@v1.14.0
@@ -37,4 +43,4 @@ jobs:
           allowUpdates: true
           tag: "${{ steps.version.outputs.VERSION }}-${{ github.ref_name }}"
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: k9s.zip
+          artifacts: "execs/*.tgz"
