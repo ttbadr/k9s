@@ -20,25 +20,27 @@ import (
 )
 
 const (
-	defaultServiceAccount      = "default"
-	defaultContainerAnnotation = "kubectl.kubernetes.io/default-container"
+	defaultServiceAccount = "default"
+
+	// DefaultContainerAnnotation represents the annotation key for the default container.
+	DefaultContainerAnnotation = "kubectl.kubernetes.io/default-container"
 )
 
 // GetDefaultContainer returns a container name if specified in an annotation.
-func GetDefaultContainer(m metav1.ObjectMeta, spec v1.PodSpec) (string, bool) {
-	defaultContainer, ok := m.Annotations[defaultContainerAnnotation]
+func GetDefaultContainer(m *metav1.ObjectMeta, spec *v1.PodSpec) (string, bool) {
+	defaultContainer, ok := m.Annotations[DefaultContainerAnnotation]
 	if !ok {
 		return "", false
 	}
 
-	for _, container := range spec.Containers {
-		if container.Name == defaultContainer {
+	for i := range spec.Containers {
+		if spec.Containers[i].Name == defaultContainer {
 			return defaultContainer, true
 		}
 	}
 	slog.Warn("Container not found. Annotation ignored",
 		slogs.CO, defaultContainer,
-		slogs.Annotation, defaultContainerAnnotation,
+		slogs.Annotation, DefaultContainerAnnotation,
 	)
 
 	return "", false
@@ -91,7 +93,7 @@ func ToYAML(o runtime.Object, showManaged bool) (string, error) {
 	if !showManaged {
 		o = o.DeepCopyObject()
 		uo := o.(*unstructured.Unstructured).Object
-		if meta, ok := uo["metadata"].(map[string]interface{}); ok {
+		if meta, ok := uo["metadata"].(map[string]any); ok {
 			delete(meta, "managedFields")
 		}
 	}

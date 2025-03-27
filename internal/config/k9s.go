@@ -24,14 +24,14 @@ type K9s struct {
 	LiveViewAutoRefresh bool       `json:"liveViewAutoRefresh" yaml:"liveViewAutoRefresh"`
 	ScreenDumpDir       string     `json:"screenDumpDir" yaml:"screenDumpDir,omitempty"`
 	RefreshRate         int        `json:"refreshRate" yaml:"refreshRate"`
-	MaxConnRetry        int        `json:"maxConnRetry" yaml:"maxConnRetry"`
+	MaxConnRetry        int32      `json:"maxConnRetry" yaml:"maxConnRetry"`
 	ReadOnly            bool       `json:"readOnly" yaml:"readOnly"`
 	NoExitOnCtrlC       bool       `json:"noExitOnCtrlC" yaml:"noExitOnCtrlC"`
 	PortForwardAddress  string     `yaml:"portForwardAddress"`
 	UI                  UI         `json:"ui" yaml:"ui"`
 	SkipLatestRevCheck  bool       `json:"skipLatestRevCheck" yaml:"skipLatestRevCheck"`
 	DisablePodCounting  bool       `json:"disablePodCounting" yaml:"disablePodCounting"`
-	ShellPod            ShellPod   `json:"shellPod" yaml:"shellPod"`
+	ShellPod            *ShellPod  `json:"shellPod" yaml:"shellPod"`
 	ImageScans          ImageScans `json:"imageScans" yaml:"imageScans"`
 	Logger              Logger     `json:"logger" yaml:"logger"`
 	Thresholds          Threshold  `json:"thresholds" yaml:"thresholds"`
@@ -95,7 +95,11 @@ func (k *K9s) Save(contextName, clusterName string, force bool) error {
 	)
 
 	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) || force {
-		slog.Debug("[CONFIG] Saving context config to disk", slogs.Path, path, slogs.Cluster, k.getActiveConfig().Context.GetClusterName(), slogs.Context, k.getActiveContextName())
+		slog.Debug("[CONFIG] Saving context config to disk",
+			slogs.Path, path,
+			slogs.Cluster, k.getActiveConfig().Context.GetClusterName(),
+			slogs.Context, k.getActiveContextName(),
+		)
 		return k.dir.Save(path, k.getActiveConfig())
 	}
 
@@ -293,12 +297,13 @@ func (k *K9s) Override(k9sFlags *Flags) {
 	k.UI.manualHeadless = k9sFlags.Headless
 	k.UI.manualLogoless = k9sFlags.Logoless
 	k.UI.manualCrumbsless = k9sFlags.Crumbsless
+	k.UI.manualSplashless = k9sFlags.Splashless
 	if k9sFlags.ReadOnly != nil && *k9sFlags.ReadOnly {
 		k.manualReadOnly = k9sFlags.ReadOnly
 	}
 	if k9sFlags.Write != nil && *k9sFlags.Write {
-		var false bool
-		k.manualReadOnly = &false
+		var falseVal bool
+		k.manualReadOnly = &falseVal
 	}
 	k.manualCommand = k9sFlags.Command
 	k.manualScreenDumpDir = k9sFlags.ScreenDumpDir
@@ -329,6 +334,15 @@ func (k *K9s) IsCrumbsless() bool {
 	}
 
 	return k.UI.Crumbsless
+}
+
+// IsSplashless returns splashless setting.
+func (k *K9s) IsSplashless() bool {
+	if IsBoolSet(k.UI.manualSplashless) {
+		return true
+	}
+
+	return k.UI.Splashless
 }
 
 // GetRefreshRate returns the current refresh rate.
@@ -372,7 +386,7 @@ func (k *K9s) Validate(c client.Connection, contextName, clusterName string) {
 	if k.getActiveConfig() == nil {
 		_, _ = k.ActivateContext(contextName)
 	}
-	k.ShellPod = k.ShellPod.Validate()
+	k.ShellPod.Validate()
 	k.Logger = k.Logger.Validate()
 	k.Thresholds = k.Thresholds.Validate()
 

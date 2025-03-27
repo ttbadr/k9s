@@ -6,11 +6,10 @@ package ui_test
 import (
 	"testing"
 
-	"github.com/derailed/tcell/v2"
-
 	"github.com/derailed/k9s/internal/config"
 	"github.com/derailed/k9s/internal/model"
 	"github.com/derailed/k9s/internal/ui"
+	"github.com/derailed/tcell/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -100,7 +99,7 @@ func TestPromptColor(t *testing.T) {
 		model.AddListener(prompt)
 
 		model.SetActive(true)
-		assert.Equal(t, prompt.GetBorderColor(), testCase.expectedColor)
+		assert.Equal(t, testCase.expectedColor, prompt.GetBorderColor())
 	}
 }
 
@@ -147,6 +146,6 @@ func TestPromptStyleChanged(t *testing.T) {
 		prompt.StylesChanged(newStyles)
 
 		model.SetActive(true)
-		assert.Equal(t, prompt.GetBorderColor(), testCase.expectedColor)
+		assert.Equal(t, testCase.expectedColor, prompt.GetBorderColor())
 	}
 }

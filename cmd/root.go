@@ -18,7 +18,6 @@ import (
 	"github.com/derailed/k9s/internal/config/data"
 	"github.com/derailed/k9s/internal/slogs"
 	"github.com/derailed/k9s/internal/view"
-
 	"github.com/lmittmann/tint"
 	"github.com/mattn/go-colorable"
 	"github.com/spf13/cobra"
@@ -58,7 +57,7 @@ func init() {
 		fmt.Printf("Fail to init k9s logs location %s\n", err)
 	}
 
-	rootCmd.SetFlagErrorFunc(func(command *cobra.Command, err error) error {
+	rootCmd.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return flagError{err: err}
 	})
 
@@ -76,7 +75,7 @@ func Execute() {
 	}
 }
 
-func run(cmd *cobra.Command, args []string) error {
+func run(*cobra.Command, []string) error {
 	if err := config.InitLocs(); err != nil {
 		return err
 	}
@@ -217,6 +216,12 @@ func initK9sFlags() {
 		"crumbsless",
 		false,
 		"Turn K9s crumbs off",
+	)
+	rootCmd.Flags().BoolVar(
+		k9sFlags.Splashless,
+		"splashless",
+		false,
+		"Turn K9s splash screen off",
 	)
 	rootCmd.Flags().BoolVarP(
 		k9sFlags.AllNamespaces,
@@ -373,7 +378,7 @@ func initK8sFlagCompletion() {
 		return cfg.AuthInfos
 	}))
 
-	_ = rootCmd.RegisterFlagCompletionFunc("namespace", func(cmd *cobra.Command, args []string, s string) ([]string, cobra.ShellCompDirective) {
+	_ = rootCmd.RegisterFlagCompletionFunc("namespace", func(_ *cobra.Command, _ []string, s string) ([]string, cobra.ShellCompDirective) {
 		conn := client.NewConfig(k8sFlags)
 		if c, err := client.InitConnection(conn, slog.Default()); err == nil {
 			if nss, err := c.ValidNamespaceNames(); err == nil {
@@ -386,7 +391,7 @@ func initK8sFlagCompletion() {
 }
 
 func k8sFlagCompletion[T any](picker k8sPickerFn[T]) completeFn {
-	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		conn := client.NewConfig(k8sFlags)
 		cfg, err := conn.RawConfig()
 		if err != nil {

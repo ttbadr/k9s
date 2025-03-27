@@ -103,7 +103,8 @@ func TestFlagsNew(t *testing.T) {
 				fuzzyKey:   "blee",
 				labelKey:   "app=fred",
 				nsKey:      "ns1",
-				contextKey: "Dev"},
+				contextKey: "Dev",
+			},
 		},
 		"ctx": {
 			i:  NewInterpreter("ctx"),
@@ -120,7 +121,6 @@ func TestFlagsNew(t *testing.T) {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			l := newArgs(u.i, u.aa)
-			assert.Equal(t, len(u.ll), len(l))
 			assert.Equal(t, u.ll, l)
 		})
 	}

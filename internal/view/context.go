@@ -28,7 +28,7 @@ type Context struct {
 }
 
 // NewContext returns a new viewer.
-func NewContext(gvr client.GVR) ResourceViewer {
+func NewContext(gvr *client.GVR) ResourceViewer {
 	c := Context{
 		ResourceViewer: NewBrowser(gvr),
 	}
@@ -85,25 +85,25 @@ func (c *Context) showRenameModal(name string, ok func(form *tview.Form, context
 			app.Content.Pages.RemovePage(renamePage)
 		}).
 		AddButton("Cancel", func() {
-			app.Content.Pages.RemovePage(renamePage)
+			app.Content.RemovePage(renamePage)
 		})
 
 	m := tview.NewModalForm("<Rename>", f)
 	m.SetText(fmt.Sprintf("Rename context %q?", name))
 	m.SetDoneFunc(func(int, string) {
-		app.Content.Pages.RemovePage(renamePage)
+		app.Content.RemovePage(renamePage)
 	})
-	app.Content.Pages.AddPage(renamePage, m, false, false)
-	app.Content.Pages.ShowPage(renamePage)
+	app.Content.AddPage(renamePage, m, false, false)
+	app.Content.ShowPage(renamePage)
 
-	for i := 0; i < f.GetButtonCount(); i++ {
+	for i := range f.GetButtonCount() {
 		f.GetButton(i).
 			SetBackgroundColorActivated(styles.ButtonFocusBgColor.Color()).
 			SetLabelColorActivated(styles.ButtonFocusFgColor.Color())
 	}
 }
 
-func (c *Context) useCtx(app *App, model ui.Tabular, gvr client.GVR, path string) {
+func (c *Context) useCtx(app *App, _ ui.Tabular, gvr *client.GVR, path string) {
 	slog.Debug("Using context",
 		slogs.GVR, gvr,
 		slogs.FQN, path,
@@ -120,7 +120,7 @@ func useContext(app *App, name string) error {
 	if app.Content.Top() != nil {
 		app.Content.Top().Stop()
 	}
-	res, err := dao.AccessorFor(app.factory, client.NewGVR("contexts"))
+	res, err := dao.AccessorFor(app.factory, client.CtGVR)
 	if err != nil {
 		return err
 	}
