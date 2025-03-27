@@ -114,7 +114,7 @@ func (c *ClusterInfo) ClusterInfoChanged(prev, curr model.ClusterMeta) {
 	c.app.QueueUpdateDraw(func() {
 		c.Clear()
 		c.layout()
-		truncatLength := 18
+		truncatLength := 25
 		row := c.setCell(0, ui.Truncate(curr.Context, truncatLength))
 		row = c.setCell(row, ui.Truncate(curr.Cluster, truncatLength))
 		row = c.setCell(row, ui.Truncate(curr.User, truncatLength))
