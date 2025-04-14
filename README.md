@@ -73,7 +73,7 @@ Please refer to our [K9s documentation](https://k9scli.io) site for installation
 Wanna discuss K9s features with your fellow `K9sers` or simply show your support for this tool?
 
 * Channel: [K9sersSlack](https://k9sers.slack.com/)
-* Invite: [K9slackers Invite](https://join.slack.com/t/k9sers/shared_invite/enQtOTA5MDEyNzI5MTU0LWQ1ZGI3MzliYzZhZWEyNzYxYzA3NjE0YTk1YmFmNzViZjIyNzhkZGI0MmJjYzhlNjdlMGJhYzE2ZGU1NjkyNTM)
+* Invite: [K9slackers Invite](https://join.slack.com/t/k9sers/shared_invite/zt-3360a389v-ElLHrb0Dp1kAXqYUItSAFA)
 
 ---
 
@@ -436,6 +436,8 @@ You can now override the context portForward default address configuration by se
       skin: dracula # => assumes the file skins/dracula.yaml is present in the  $XDG_DATA_HOME/k9s/skins directory
       # Allows to set certain views default fullscreen mode. (yaml, helm history, describe, value_extender, details, logs) Default false
       defaultsToFullScreen: false
+      # Show full resource GVR (Group/Version/Resource) vs just R. Default: false.
+      useGVRTitleFormat: false
     # Toggles icons display as not all terminal support these chars.
     noIcons: false
     # Toggles whether k9s should check for the latest revision from the GitHub repository releases. Default is false.
