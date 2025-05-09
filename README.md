@@ -409,12 +409,16 @@ You can now override the context portForward default address configuration by se
     liveViewAutoRefresh: false
     # The path to screen dump. Default: '%temp_dir%/k9s-screens-%username%' (k9s info)
     screenDumpDir: /tmp/dumps
-    # Represents ui poll intervals. Default 2secs
+    # Represents ui poll intervals in seconds. Default 2secs
     refreshRate: 2
+    # Overrides the default k8s api server requests timeout. Defaults 120s
+    apiServerTimeout: 15s
     # Number of retries once the connection to the api-server is lost. Default 15.
     maxConnRetry: 5
     # Indicates whether modification commands like delete/kill/edit are disabled. Default is false
     readOnly: false
+    # This setting allows users to specify the default view, but it is not set by default.
+    defaultView: ""
     # Toggles whether k9s should exit when CTRL-C is pressed. When set to true, you will need to exit k9s via the :quit command. Default is false.
     noExitOnCtrlC: false
     #UI settings
@@ -429,6 +433,7 @@ You can now override the context portForward default address configuration by se
       crumbsless: false
       # Set to true to suppress the K9s splash screen on start. Default false. Note that for larger clusters or higher latency connections, there may be no resources visible initially until local caches have finished populating.
       splashless: false
+      # Toggles icons display as not all terminal support these chars. Default: true
       noIcons: false
       # Toggles reactive UI. This option provide for watching on disk artifacts changes and update the UI live Defaults to false.
       reactive: false
@@ -470,6 +475,13 @@ You can now override the context portForward default address configuration by se
         memory: 100Mi
       # Enable TTY
       tty: true
+      hostPathVolume:
+      - name: docker-socket
+        # Mount the Docker socket into the shell pod
+        mountPath: /var/run/docker.sock
+        # The path on the host to mount
+        hostPath: /var/run/docker.sock
+        readOnly: true
   ```
 
 ---
@@ -517,6 +529,21 @@ k9s:
     nodeShell: true # => Enable this feature gate to make nodeShell available on this cluster
   portForwardAddress: localhost
 ```
+
+### Customizing the Shell Pod
+You can also customize the shell pod by adding a `hostPathVolume` to your shell pod. This allows you to mount a local directory or file into the shell pod. For example, if you want to mount the Docker socket into the shell pod, you can do so as follows:
+```yaml
+k9s:
+  shellPod:
+    hostPathVolume:
+    - name: docker-socket
+      # Mount the Docker socket into the shell pod
+      mountPath: /var/run/docker.sock
+      # The path on the host to mount
+      hostPath: /var/run/docker.sock
+      readOnly: true
+```
+This will mount the Docker socket into the shell pod at `/var/run/docker.sock` and make it read-only. You can also mount any other directory or file in a similar way.
 
 ---
 

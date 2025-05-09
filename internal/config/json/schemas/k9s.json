@@ -10,11 +10,13 @@
         "liveViewAutoRefresh": { "type": "boolean" },
         "screenDumpDir": {"type": "string"},
         "refreshRate": { "type": "integer" },
+        "apiServerTimeout": { "type": "string" },
         "maxConnRetry": { "type": "integer" },
         "readOnly": { "type": "boolean" },
         "noExitOnCtrlC": { "type": "boolean" },
         "skipLatestRevCheck": { "type": "boolean" },
         "disablePodCounting": { "type": "boolean" },
+        "defaultView": { "type": "string" },
         "portForwardAddress": { "type": "string" },
         "ui": {
           "type": "object",

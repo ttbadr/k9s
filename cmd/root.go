@@ -104,7 +104,7 @@ func run(*cobra.Command, []string) error {
 
 	slog.SetDefault(slog.New(tint.NewHandler(logFile, &tint.Options{
 		Level:      parseLevel(*k9sFlags.LogLevel),
-		TimeFormat: time.Kitchen,
+		TimeFormat: time.RFC3339,
 	})))
 
 	cfg, err := loadConfiguration()
@@ -112,6 +112,10 @@ func run(*cobra.Command, []string) error {
 		slog.Warn("Fail to load global/context configuration", slogs.Error, err)
 	}
 	app := view.NewApp(cfg)
+	if app.Config.K9s.DefaultView != "" {
+		app.Config.SetActiveView(app.Config.K9s.DefaultView)
+	}
+
 	if err := app.Init(version, *k9sFlags.RefreshRate); err != nil {
 		return err
 	}
@@ -269,7 +273,7 @@ func initK8sFlags() {
 	rootCmd.Flags().StringVar(
 		k8sFlags.Timeout,
 		"request-timeout",
-		"5s",
+		"",
 		"The length of time to wait before giving up on a single server request",
 	)
 

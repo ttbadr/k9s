@@ -215,4 +215,10 @@ const (
 
 	// JQExp tracks a jq expression logger key.
 	JQExp = "jq-exp"
+
+	// Duration tracks a duration logger key.
+	Duration = "duration"
+
+	// Type tracks a type logger key.
+	Type = "type"
 )
