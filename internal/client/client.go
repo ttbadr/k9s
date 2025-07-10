@@ -16,6 +16,7 @@ import (
 
 	"github.com/derailed/k9s/internal/slogs"
 	authorizationv1 "k8s.io/api/authorization/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/apimachinery/pkg/version"
@@ -140,9 +141,18 @@ func (a *APIClient) ActiveNamespace() string {
 }
 
 func (a *APIClient) clearCache() {
+	a.mx.Lock()
+	defer a.mx.Unlock()
+
+	a.client = nil
+	a.logClient = nil
+	a.dClient = nil
+	a.mxsClient = nil
+	a.cachedClient = nil
 	for _, k := range a.cache.Keys() {
 		a.cache.Remove(k)
 	}
+	slog.Debug("APIClient cache and clients reset.")
 }
 
 // CanI checks if user has access to a certain resource.
@@ -294,37 +304,48 @@ func (a *APIClient) CheckConnectivity() bool {
 		if err := recover(); err != nil {
 			a.setConnOK(false)
 		}
-		if !a.getConnOK() {
-			a.clearCache()
-		}
 	}()
 
 	cfg, err := a.config.RESTConfig()
 	if err != nil {
 		slog.Error("RestConfig load failed", slogs.Error, err)
-		a.connOK = false
-		return a.connOK
+		a.setConnOK(false)
+		return false
 	}
 	cfg.Timeout = a.config.CallTimeout()
 	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		slog.Error("Unable to connect to api server", slogs.Error, err)
 		a.setConnOK(false)
-		return a.getConnOK()
+		return false
 	}
 
-	// Check connection
-	if _, err := client.ServerVersion(); err == nil {
-		if !a.getConnOK() {
-			a.reset()
+	wasConnected := a.getConnOK()
+	_, err = client.ServerVersion()
+	if err != nil {
+		if wasConnected {
+			slog.Error("Unable to fetch server version", slogs.Error, err)
+			if k8serrors.IsUnauthorized(err) {
+				slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.")
+			}
 		}
-	} else {
-		slog.Error("Unable to fetch server version", slogs.Error, err)
 		a.setConnOK(false)
+	} else {
+		if !wasConnected {
+			slog.Info("K8s connection restored.")
+		}
+		a.setConnOK(true)
+	}
+
+	if wasConnected != a.getConnOK() {
+		a.config.reset()
+		a.clearCache()
 	}
 
 	return a.getConnOK()
 }
+
+
 
 // Config return a kubernetes configuration.
 func (a *APIClient) Config() *Config {
@@ -574,14 +595,9 @@ func (a *APIClient) SwitchContext(name string) error {
 
 func (a *APIClient) reset() {
 	a.config.reset()
-	a.cache = cache.NewLRUExpireCache(cacheSize)
 	a.nsClient = nil
-
-	a.setDClient(nil)
-	a.setMxsClient(nil)
-	a.setCachedClient(nil)
-	a.setClient(nil)
-	a.setLogClient(nil)
+	a.cache = cache.NewLRUExpireCache(cacheSize)
+	a.clearCache()
 	a.setConnOK(true)
 }
 
