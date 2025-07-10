@@ -318,6 +318,10 @@ func (a *APIClient) CheckConnectivity() bool {
 		if !a.getConnOK() {
 			a.reset()
 		}
+	} else if(strings.Contains(err.Error(), "401")){
+		slog.Info("Authorization error detected, try to reload kube config.")
+		a.reset()
+		return true
 	} else {
 		slog.Error("Unable to fetch server version", slogs.Error, err)
 		a.setConnOK(false)

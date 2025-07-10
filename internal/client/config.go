@@ -78,7 +78,16 @@ func (c *Config) clientConfig() clientcmd.ClientConfig {
 	return c.flags.ToRawKubeConfigLoader()
 }
 
-func (*Config) reset() {}
+func (c *Config) reset() {
+	newFlags := genericclioptions.NewConfigFlags(UsePersistentConfig)
+	newFlags.KubeConfig = c.flags.KubeConfig
+	newFlags.Context = c.flags.Context
+	newFlags.Namespace = c.flags.Namespace
+	
+	c.mx.Lock()
+	c.flags = newFlags
+	c.mx.Unlock()
+}
 
 // SwitchContext changes the kubeconfig context to a new cluster.
 func (c *Config) SwitchContext(name string) error {
@@ -86,7 +95,7 @@ func (c *Config) SwitchContext(name string) error {
 	if err != nil {
 		return fmt.Errorf("context %q does not exist", name)
 	}
-	// !!BOZO!! Do you need to reset the flags?
+	// Force reload config when switching context to avoid cached auth issues
 	flags := genericclioptions.NewConfigFlags(UsePersistentConfig)
 	flags.Context, flags.ClusterName = &name, &ct.Cluster
 	flags.Namespace = c.flags.Namespace
