@@ -504,7 +504,7 @@ func buildShellArgs(cmd, path, co string, flags *genericclioptions.ConfigFlags) 
 }
 
 func fetchContainers(meta *metav1.ObjectMeta, spec *v1.PodSpec, allContainers bool) []string {
-	nn := make([]string, 0, len(spec.Containers)+len(spec.InitContainers))
+	nn := make([]string, 0, len(spec.Containers)+len(spec.EphemeralContainers)+len(spec.InitContainers))
 	// put the default container as the first entry
 	defaultContainer, ok := dao.GetDefaultContainer(meta, spec)
 	if ok {
@@ -516,12 +516,12 @@ func fetchContainers(meta *metav1.ObjectMeta, spec *v1.PodSpec, allContainers bo
 			nn = append(nn, spec.Containers[i].Name)
 		}
 	}
-	if !allContainers {
-		return nn
-	}
 
 	for i := range spec.InitContainers {
-		nn = append(nn, spec.InitContainers[i].Name)
+		isSidecar := spec.InitContainers[i].RestartPolicy != nil && *spec.InitContainers[i].RestartPolicy == v1.ContainerRestartPolicyAlways
+		if allContainers || isSidecar {
+			nn = append(nn, spec.InitContainers[i].Name)
+		}
 	}
 	for i := range spec.EphemeralContainers {
 		nn = append(nn, spec.EphemeralContainers[i].Name)
