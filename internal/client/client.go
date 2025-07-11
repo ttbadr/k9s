@@ -300,6 +300,8 @@ func (a *APIClient) ValidNamespaceNames() (NamespaceNames, error) {
 
 // CheckConnectivity return true if api server is cool or false otherwise.
 func (a *APIClient) CheckConnectivity() bool {
+	a.config.reset()
+
 	defer func() {
 		if err := recover(); err != nil {
 			a.setConnOK(false)
