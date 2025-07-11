@@ -334,10 +334,15 @@ func (a *APIClient) CheckConnectivity() bool {
 		return true
 	}
 
-	if k8serrors.IsUnauthorized(err) {
-		slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.")
-		a.clearCache()
-		return true
+	var status *k8serrors.StatusError
+	if errors.As(err, &status) {
+		if status.Status().Code == 401 {
+			slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.", "reason", status.Status().Reason)
+			a.reset()
+			return true
+		} else {
+			slog.Error("fetch server version, return code", slogs.Error, status.Status().Code)
+		}
 	}
 
 	if wasConnected {
