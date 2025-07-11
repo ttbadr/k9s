@@ -322,27 +322,29 @@ func (a *APIClient) CheckConnectivity() bool {
 
 	wasConnected := a.getConnOK()
 	_, err = client.ServerVersion()
-	if err != nil {
-		if wasConnected {
-			slog.Error("Unable to fetch server version", slogs.Error, err)
-			if k8serrors.IsUnauthorized(err) {
-				slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.")
-			}
-		}
-		a.setConnOK(false)
-	} else {
+
+	if err == nil {
 		if !wasConnected {
 			slog.Info("K8s connection restored.")
+			a.reset()
 		}
 		a.setConnOK(true)
+		return true
 	}
 
-	if wasConnected != a.getConnOK() {
-		a.config.reset()
+	if k8serrors.IsUnauthorized(err) {
+		slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.")
+		a.clearCache()
+		return true
+	}
+
+	if wasConnected {
+		slog.Error("Unable to fetch server version", slogs.Error, err)
 		a.clearCache()
 	}
+	a.setConnOK(false)
 
-	return a.getConnOK()
+	return false
 }
 
 
