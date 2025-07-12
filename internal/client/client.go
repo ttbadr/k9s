@@ -16,7 +16,6 @@ import (
 
 	"github.com/derailed/k9s/internal/slogs"
 	authorizationv1 "k8s.io/api/authorization/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/apimachinery/pkg/version"
@@ -334,15 +333,12 @@ func (a *APIClient) CheckConnectivity() bool {
 		return true
 	}
 
-	var status *k8serrors.StatusError
-	if errors.As(err, &status) {
-		if status.Status().Code == 401 {
-			slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.", "reason", status.Status().Reason)
-			a.reset()
-			return true
-		} else {
-			slog.Error("fetch server version, return code", slogs.Error, status.Status().Code)
-		}
+	if strings.Contains(err.Error(), "401") {
+		slog.Warn("Authorization error detected. Attempting to refresh token by resetting client.", "reason", err)
+		a.reset()
+		return true
+	} else {
+		slog.Error("fetch server version, return code", slogs.Error, err)
 	}
 
 	if wasConnected {
