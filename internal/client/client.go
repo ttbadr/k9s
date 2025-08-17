@@ -51,6 +51,7 @@ type APIClient struct {
 	mx                sync.RWMutex
 	cache             *cache.LRUExpireCache
 	connOK            bool
+	cancelFn          context.CancelFunc
 	log               *slog.Logger
 }
 
@@ -61,6 +62,8 @@ func NewTestAPIClient() *APIClient {
 		cache:  cache.NewLRUExpireCache(cacheSize),
 	}
 }
+
+const resetInterval = 5 * time.Minute
 
 // InitConnection initialize connection from command line args.
 // Checks for connectivity with the api server.
@@ -75,6 +78,25 @@ func InitConnection(config *Config, log *slog.Logger) (*APIClient, error) {
 	if err != nil {
 		slog.Warn("Fail to locate metrics-server", slogs.Error, err)
 	}
+
+	// NOTE: Goroutine to periodically reset client to address OIDC token expirations.
+	ctx, cancel := context.WithCancel(context.Background())
+	a.cancelFn = cancel
+	go func() {
+		ticker := time.NewTicker(resetInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				log.Debug("Resetting client connection...", "interval", resetInterval)
+				a.reset()
+			case <-ctx.Done():
+				log.Debug("Client reset canceled!")
+				return
+			}
+		}
+	}()
+
 	if err == nil || errors.Is(err, noMetricServerErr) || errors.Is(err, metricsUnsupportedErr) {
 		return &a, nil
 	}
